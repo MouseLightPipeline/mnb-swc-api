@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "start": "node src/swcApiApp.js",
-    "dev": "DEBUG=ndb:swc-api* node $NODE_DEBUG_OPTION src/swcApiApp.js"
+    "dev": "DEBUG=ndb:swc-api* node $NODE_DEBUG_OPTION --trace-deprecation src/swcApiApp.js"
   },
   "babel": {
     "presets": [
@@ -12,7 +12,9 @@
     ]
   },
   "dependencies": {
+    "@types/byline": "^4.2.31",
     "body-parser": "^1.16.1",
+    "byline": "^5.0.0",
     "debug": "~2.6.0",
     "express": "^4.14.1",
     "graphql": "^0.9.1",

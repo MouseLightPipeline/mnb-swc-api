@@ -1,5 +1,12 @@
 export const TableName = "Fluorophore";
 
+export interface IFluorophore {
+    id: string;
+    name: string;
+
+    getInjections();
+}
+
 export function sequelizeImport(sequelize, DataTypes) {
     const Fluorophore = sequelize.define(TableName, {
         id: {

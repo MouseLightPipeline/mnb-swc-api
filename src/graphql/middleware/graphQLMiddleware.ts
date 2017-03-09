@@ -24,9 +24,7 @@ function graphqlRequestHandler(req) {
     // Although most (all?) of the current context is global, Apollo recommends creating a per request context. Within
     // the GraphQLAppContext constructor we may choose to simply return the same contents so long as there is no need
     // for per-request context, but maintain the recommended pattern at this level.
-    let appContext = new GraphQLServerContext();
-
-    // console.log(req);
+    let appContext = new GraphQLServerContext(req.files);
 
     return {
         schema: schema,

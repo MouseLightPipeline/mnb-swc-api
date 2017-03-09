@@ -1,4 +1,5 @@
 import {ITracingNode} from "./tracingNode";
+
 export interface IStructureIdentifier {
     id: string;
     name: string;
@@ -30,38 +31,95 @@ export function sequelizeImport(sequelize, DataTypes) {
         paranoid: true
     });
 
-    StructureIdentifier.populateDefault = () => {
-        return populateDefault(StructureIdentifier);
+    StructureIdentifier.populateDefault = function () {
+        populateDefault(StructureIdentifier);
+    };
+
+    StructureIdentifier.getMap = async() => {
+        const structures = await StructureIdentifier.findAll();
+
+        let currentStructureMap = {};
+
+        structures.forEach((obj) => {
+            currentStructureMap[obj.value] = obj.id;
+        });
+
+        return currentStructureMap;
     };
 
     return StructureIdentifier;
 }
 
+function getMap(model) {
+    return new Promise(function (resolve, reject) {
+        let currentStructureMap = {};
+
+        model.findAll().then(structures => {
+            structures.forEach((obj) => {
+                currentStructureMap[obj.value] = obj.id;
+            });
+
+            resolve(currentStructureMap);
+        });
+    });
+}
+
 function populateDefault(model) {
-    return new Promise(function (resolve) {
+    return new Promise(function (resolve, reject) {
         model.count().then(function (count) {
             if (count < 1) {
-                model.create({name: "undefined", value: 0, mutable: false});
+                model.create({name: 'undefined', value: 0, mutable: false});
             }
             if (count < 2) {
-                model.create({name: "soma", value: 1, mutable: false});
+                model.create({name: 'soma', value: 1, mutable: false});
             }
             if (count < 3) {
-                model.create({name: "axon", value: 2, mutable: false});
+                model.create({name: 'axon', value: 2, mutable: false});
             }
             if (count < 4) {
-                model.create({name: "(basal) dendrite", value: 3, mutable: false});
+                model.create({name: '(basal) dendrite', value: 3, mutable: false});
             }
             if (count < 5) {
-                model.create({name: "apical dendrite", value: 4, mutable: false});
+                model.create({name: 'apical dendrite', value: 4, mutable: false});
             }
             if (count < 6) {
-                model.create({name: "fork point", value: 5, mutable: false});
+                model.create({name: 'fork point', value: 5, mutable: false});
             }
             if (count < 7) {
-                model.create({name: "end point", value: 6, mutable: false});
+                model.create({name: 'end point', value: 6, mutable: false});
             }
             resolve();
         });
     });
 }
+
+/*
+ async function populateDefault(model) {
+ try {
+ let count = await model.count();
+
+ if (count < 1) {
+ await model.create({name: "undefined", value: 0, mutable: false});
+ }
+ if (count < 2) {
+ await model.create({name: "soma", value: 1, mutable: false});
+ }
+ if (count < 3) {
+ await model.create({name: "axon", value: 2, mutable: false});
+ }
+ if (count < 4) {
+ await model.create({name: "(basal) dendrite", value: 3, mutable: false});
+ }
+ if (count < 5) {
+ await model.create({name: "apical dendrite", value: 4, mutable: false});
+ }
+ if (count < 6) {
+ await model.create({name: "fork point", value: 5, mutable: false});
+ }
+ if (count < 7) {
+ await model.create({name: "end point", value: 6, mutable: false});
+ }
+ } catch (err) {
+ console.log(err);
+ }
+ }*/

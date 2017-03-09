@@ -1,4 +1,5 @@
 import {ITracingNode} from "./tracingNode";
+import {ISwcParseResult} from "../../Swc";
 
 export interface ITracing {
     id: string;
@@ -25,11 +26,17 @@ export function sequelizeImport(sequelize, DataTypes) {
         },
         // reference to external sample database entry
         neuronId: DataTypes.UUID,
+        annotator: {
+            type: DataTypes.TEXT,
+            defaultValue: ""
+        },
+        // From uploaded file data
         filename: {
             type: DataTypes.TEXT,
             defaultValue: ""
         },
-        annotator: {
+        // Local storage, if kept
+        storedFilePath: {
             type: DataTypes.TEXT,
             defaultValue: ""
         },

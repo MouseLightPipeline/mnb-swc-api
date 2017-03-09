@@ -1,9 +1,20 @@
 const debug = require("debug")("ndb:swc-api:context");
 
+import {IUploadFile} from "./middleware/schema";
+
+import {swcParse} from "../Swc";
+
 import {PersistentStorageManager} from "../models/databaseConnector";
 import {ITracing} from "../models/swc/tracing";
 import {ITracingNode} from "../models/swc/tracingNode";
 import {IStructureIdentifier} from "../models/swc/structureIdentifier";
+import {ISample} from "../models/sample/sample";
+import {INeuron} from "../models/sample/neuron";
+import {IInjection} from "../models/sample/injection";
+import {IInjectionVirus} from "../models/sample/InjectionVirus";
+import {IFluorophore} from "../models/sample/fluorophore";
+import {IBrainArea} from "../models/sample/brainArea";
+import {IMouseStrain} from "../models/sample/mousestrain";
 
 export interface IPageInfo {
     endCursor: string,
@@ -22,6 +33,24 @@ export interface INodeConnections {
 }
 
 export interface IGraphQLServerContext {
+    attachedFiles;
+
+    // Query
+    getSamples(): Promise<ISample[]>;
+    getSample(id: string): Promise<ISample>;
+    getInjectionsForSample(sample: ISample): Promise<IInjection[]>;
+
+    getMouseStrains(): Promise<IMouseStrain[]>;
+    getMouseStrain(id: string): Promise<IMouseStrain>;
+
+    getInjections(): Promise<IInjection[]>;
+    getNeuronsForInjection(injection: IInjection): Promise<INeuron[]>;
+    getVirusForInjection(injection: IInjection): Promise<IInjectionVirus>;
+    getFluorophoreForInjection(injection: IInjection): Promise<IFluorophore>;
+    getBrainAreaForInjection(injection: IInjection): Promise<IBrainArea>;
+
+    getBrainAreaForNeuron(neuron: INeuron): Promise<IBrainArea>;
+
     getTracings(): Promise<ITracing[]>;
     getTracing(id: string): Promise<ITracing>;
     getStructureForTracing(tracing: ITracing): Promise<IStructureIdentifier>;
@@ -36,10 +65,83 @@ export interface IGraphQLServerContext {
     getStructureIdentifiers(): Promise<IStructureIdentifier[]>;
     getStructureIdentifier(id: string): Promise<IStructureIdentifier>;
     getNodesForStructure(structure: IStructureIdentifier): Promise<ITracingNode[]>;
+
+    // Mutation
+    receiveSwcUpload(annotator: string, neuronId: string, structureIdentifierId: string);
 }
 
 export class GraphQLServerContext implements IGraphQLServerContext {
     private _storageManager = PersistentStorageManager.Instance();
+
+    private _attachedFiles: IUploadFile[];
+
+    public constructor(files = []) {
+        this._attachedFiles = files;
+    }
+
+    public get attachedFiles() {
+        return this._attachedFiles;
+    }
+
+    public async getSamples(): Promise<ISample[]> {
+        return this._storageManager.Samples.findAll({});
+    }
+
+    public async getSample(id: string): Promise<ISample> {
+        if (!id) {
+            return null;
+        }
+
+        return await this._storageManager.Samples.findById(id);
+    }
+
+    public async getMouseStrains(): Promise<IMouseStrain[]> {
+        return this._storageManager.MouseStrains.findAll({});
+    }
+
+    public async getMouseStrain(id: string): Promise<IMouseStrain> {
+        return this._storageManager.MouseStrains.findById(id);
+    }
+
+   public async getInjectionsForSample(sample: ISample): Promise<IInjection[]> {
+        return this._storageManager.Injections.findAll({
+            where: {sampleId: sample.id}
+        });
+    }
+
+    public async getInjections(): Promise<IInjection[]> {
+        return this._storageManager.Injections.findAll({});
+    }
+
+    public async getNeuronsForInjection(injection: IInjection): Promise<INeuron[]> {
+        const result = await this._storageManager.Injections.findById(injection.id);
+
+        return result ? result.getNeurons() : [];
+    }
+
+    public async getVirusForInjection(injection: IInjection): Promise<IInjectionVirus> {
+        const result = await this._storageManager.Injections.findById(injection.id);
+
+        return result ? result.getInjectionVirus() : [];
+    }
+
+    public async getFluorophoreForInjection(injection: IInjection): Promise<IFluorophore> {
+        const result = await this._storageManager.Injections.findById(injection.id);
+
+        return result ? result.getFluorophore() : [];
+    }
+
+    public async getBrainAreaForInjection(injection: IInjection): Promise<IBrainArea> {
+        const result = await this._storageManager.Injections.findById(injection.id);
+
+        return result ? result.getBrainArea() : [];
+    }
+
+    public async getBrainAreaForNeuron(neuron: INeuron): Promise<IBrainArea> {
+        const result = await this._storageManager.Neurons.findById(neuron.id);
+
+        return result ? result.getBrainArea() : [];
+    }
 
     public async getTracings(): Promise<ITracing[]> {
         return this._storageManager.Tracings.findAll({});
@@ -75,9 +177,6 @@ export class GraphQLServerContext implements IGraphQLServerContext {
     }
 
     public async getNodesConnectionForTracing(tracing: ITracing, first: number, after: string): Promise<INodeConnections> {
-        debug(first);
-        debug(after);
-
         let offset = 0;
         let limit = 10;
 
@@ -140,6 +239,65 @@ export class GraphQLServerContext implements IGraphQLServerContext {
         const result = await this._storageManager.StructureIdentifiers.findById(structure.id);
 
         return result ? result.getNodes() : [];
+    }
+
+    public async receiveSwcUpload(annotator: string, neuronId: string, structureIdentifierId: string): Promise<boolean> {
+        if (!this.attachedFiles || this.attachedFiles.length === 0) {
+            return false;
+        }
+
+        const structureMap = await this._storageManager.StructureIdentifiers.getMap();
+
+        const promises = this.attachedFiles.map(async(file) => {
+
+            const parseOutput = await swcParse(file);
+
+            if (parseOutput.rows.length === 0) {
+                debug(`${file.originalname} did not contain any identifiable rows`);
+                return;
+            }
+
+            const tracingData = {
+                annotator: annotator,
+                neuronId: neuronId,
+                structureIdentifierId: structureIdentifierId,
+                filename: file.originalname,
+                comments: parseOutput.comments,
+                offsetX: parseOutput.janeliaOffsetX,
+                offsetY: parseOutput.janeliaOffsetY,
+                offsetZ: parseOutput.janeliaOffsetZ
+            };
+
+            let nodes: ITracingNode[] = parseOutput.rows.map(row => {
+                return {
+                    tracingId: "",
+                    sampleNumber: row.sampleNumber,
+                    structureIdentifierId: structureMap[row.structure],
+                    x: row.x,
+                    y: row.y,
+                    z: row.z,
+                    radius: row.radius,
+                    parentNumber: row.parentNumber
+                }
+            });
+
+            await this._storageManager.SwcConnection.transaction(async(t) => {
+                let tracing = await this._storageManager.Tracings.create(tracingData, {transaction: t});
+
+                nodes = nodes.map<ITracingNode>(node => {
+                    node.tracingId = tracing.id;
+                    return node;
+                });
+
+                return this._storageManager.TracingNodes.bulkCreate(nodes, {transaction: t});
+            });
+
+            debug(`inserted ${nodes.length} nodes from ${file.originalname}`);
+        });
+
+        await Promise.all(promises);
+
+        return true;
     }
 }
 

@@ -1,5 +1,19 @@
 export const TableName = "Sample";
 
+export interface ISample {
+    id: string,
+    idNumber: number;
+    tag: string;
+    comment: string;
+    sampleDate: Date;
+    sampleDateString: string;
+    mouseStrainId: string;
+    activeRegistrationId: string;
+
+    getRegistrationTransforms()
+    getMouseStrain();
+}
+
 export function sequelizeImport(sequelize, DataTypes) {
     const Sample = sequelize.define(TableName, {
         id: {
@@ -28,9 +42,19 @@ export function sequelizeImport(sequelize, DataTypes) {
     }, {
         classMethods: {
             associate: models => {
+                Sample.hasMany(models.Injection, {foreignKey: "sampleId", as: "injections"});
                 Sample.hasMany(models.RegistrationTransform, {foreignKey: "sampleId", as: "registrationTransforms"});
                 Sample.belongsTo(models.MouseStrain, {foreignKey: "mouseStrainId", as: "mouseStrain"});
             }
+        },
+        getterMethods   : {
+            sampleDateString : function()  { return this.sampleDate.toUTCString(); }
+        },
+
+        setterMethods   : {
+            sampleDateString  : function(value) {
+                this.setDataValue("sampleDate", new Date(value));
+            },
         },
         timestamps: true,
         paranoid: true

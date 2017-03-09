@@ -1,5 +1,12 @@
 export const TableName = "InjectionVirus";
 
+export interface IInjectionVirus {
+    id: string;
+    name: string;
+
+    getInjections();
+}
+
 export function sequelizeImport(sequelize, DataTypes) {
     const InjectionVirus = sequelize.define(TableName, {
         id: {

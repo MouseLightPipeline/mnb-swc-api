@@ -1,4 +1,4 @@
-FROM node:7
+FROM node:7.5
 
 # Bundle app source
 COPY . /app
@@ -10,4 +10,5 @@ RUN rm -rf /app/node_modules
 RUN cd /app; npm install -g yarn
 RUN cd /app; yarn install
 
-EXPOSE  9651
+EXPOSE  9671
+

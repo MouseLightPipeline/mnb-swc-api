@@ -18,7 +18,7 @@ app.use(bodyParser.urlencoded({extended: true}));
 
 app.use(bodyParser.json());
 
-app.use(multer({storage: multer.memoryStorage()}).single('contents'));
+app.use(multer({dest: "uploads"}).any());
 
 app.use(config.graphQlEndpoint, graphQLMiddleware());
 

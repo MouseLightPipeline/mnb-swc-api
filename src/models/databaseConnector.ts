@@ -31,8 +31,15 @@ export interface ISequelizeDatabase<T> {
 
 export class PersistentStorageManager {
 
+    private sampleDatabase: ISequelizeDatabase<ISampleDatabaseModels>;
+    private swcDatabase: ISequelizeDatabase<ISwcDatabaseModels>;
+
     public static Instance(): PersistentStorageManager {
         return _manager;
+    }
+
+    public get SwcConnection() {
+        return this.swcDatabase.connection;
     }
 
     public get Samples() {
@@ -51,6 +58,22 @@ export class PersistentStorageManager {
         return this.sampleDatabase.models.Neuron;
     }
 
+    public get MouseStrains() {
+        return this.sampleDatabase.models.MouseStrain;
+    }
+
+    public get InjectionViruses() {
+        return this.sampleDatabase.models.InjectionVirus;
+    }
+
+    public get Fluorophores() {
+        return this.sampleDatabase.models.Fluorophore;
+    }
+
+    public get BrainAreas() {
+        return this.sampleDatabase.models.BrainArea;
+    }
+
     public get Tracings() {
         return this.swcDatabase.models.Tracing;
     }
@@ -64,12 +87,14 @@ export class PersistentStorageManager {
     }
 
     public async initialize() {
+        this.sampleDatabase = await createConnection("sample", {});
         await sync(this.sampleDatabase, "sample");
-        await sync(this.swcDatabase, "swc");
-    }
 
-    private sampleDatabase: ISequelizeDatabase<ISampleDatabaseModels> = createConnection("sample", {});
-    private swcDatabase: ISequelizeDatabase<ISwcDatabaseModels> = createConnection("swc", {});
+        this.swcDatabase = await createConnection("swc", {});
+        await sync(this.swcDatabase, "swc");
+
+        await this.StructureIdentifiers.populateDefault();
+    }
 }
 
 async function sync(database, name, force = false) {
@@ -86,7 +111,7 @@ async function sync(database, name, force = false) {
     }
 }
 
-function createConnection<T>(name: string, models: T) {
+async function createConnection<T>(name: string, models: T) {
     const env = process.env.NODE_ENV || "development";
 
     const databaseConfig = config[name][env];
@@ -99,7 +124,7 @@ function createConnection<T>(name: string, models: T) {
 
     db.connection = new Sequelize(databaseConfig.database, databaseConfig.username, databaseConfig.password, databaseConfig);
 
-    return loadModels(db, __dirname + "/" + name);
+    return await loadModels(db, __dirname + "/" + name);
 }
 
 const _manager: PersistentStorageManager = new PersistentStorageManager();

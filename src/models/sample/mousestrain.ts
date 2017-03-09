@@ -1,5 +1,12 @@
 export const TableName = "MouseStrain";
 
+export interface IMouseStrain {
+    id: string;
+    name: string;
+
+    getSamples();
+}
+
 export function sequelizeImport(sequelize, DataTypes) {
     const MouseStrain = sequelize.define(TableName, {
         id: {
@@ -9,6 +16,11 @@ export function sequelizeImport(sequelize, DataTypes) {
         },
         name: DataTypes.TEXT
     }, {
+        classMethods: {
+            associate: models => {
+                MouseStrain.hasMany(models.Sample, {foreignKey: "mouseStrainId", as: "samples"});
+            }
+        },
         timestamps: true,
         paranoid: true
     });
