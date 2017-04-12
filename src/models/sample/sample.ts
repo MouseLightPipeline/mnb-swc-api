@@ -3,10 +3,10 @@ export const TableName = "Sample";
 export interface ISample {
     id: string,
     idNumber: number;
+    animalId: string;
     tag: string;
     comment: string;
     sampleDate: Date;
-    sampleDateString: string;
     mouseStrainId: string;
     activeRegistrationId: string;
 
@@ -25,6 +25,7 @@ export function sequelizeImport(sequelize, DataTypes) {
             type: DataTypes.INTEGER,
             defaultValue: -1
         },
+        animalId: DataTypes.TEXT,
         tag: {
             type: DataTypes.TEXT,
             defaultValue: ""

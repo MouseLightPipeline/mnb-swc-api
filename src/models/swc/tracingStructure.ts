@@ -1,31 +1,29 @@
-export interface IRegistrationTransform {
+export const TableName = "TracingStructure";
+
+export interface ITracingStructure {
     id: string;
-    location: string;
     name: string;
-    notes: string;
+    value: number;
 }
 
-export const TableName = "RegistrationTransform";
-
 export function sequelizeImport(sequelize, DataTypes) {
-    const RegistrationTransform = sequelize.define(TableName, {
+    const TracingStructure = sequelize.define(TableName, {
         id: {
             primaryKey: true,
             type: DataTypes.UUID,
             defaultValue: DataTypes.UUIDV4
         },
-        location: DataTypes.TEXT,
         name: DataTypes.TEXT,
-        notes: DataTypes.TEXT,
+        value: DataTypes.INTEGER
     }, {
         classMethods: {
             associate: models => {
-                RegistrationTransform.belongsTo(models.Sample, {foreignKey: "sampleId", as: "sample"});
+                TracingStructure.hasMany(models.SwcTracing, {foreignKey: "tracingStructureId", as: "SwcTracings"});
             }
         },
         timestamps: true,
         paranoid: true
     });
 
-    return RegistrationTransform;
+    return TracingStructure;
 }

@@ -4,75 +4,65 @@ scalar UploadedFile
 type Sample {
     id: String
     idNumber: Int
+    animalId: String
     tag: String
     comment: String
-    sampleDateString: String
-    mouseStrainId: String
+    sampleDate: Float
     mouseStrain: MouseStrain
-    injections: [Injection]
-    registrationTransforms: [RegistrationTransform]
-    activeRegistrationTransformId: String
+    injections: [Injection!]!
+    activeRegistrationTransform: RegistrationTransform
+    createdAt: Float
+    updatedAt: Float
 }
 
 type Neuron {
     id: String
     idNumber: Int
+    idString: String
     tag: String
     keywords: String
     x: Float
     y: Float
     z: Float
-    brainAreaId: String
     brainArea: BrainArea
-    injectionId: String
     injection: Injection
+    createdAt: Float
+    updatedAt: Float
 }
 
 type Injection {
     id: String
-    sampleId: String
     sample: Sample
-    brainAreaId: String
     brainArea: BrainArea
-    injectionVirusId: String
     injectionVirus: InjectionVirus
-    fluorophoreId: String
     fluorophore: Fluorophore
     neurons: [Neuron]
+    createdAt: Float
+    updatedAt: Float
 }
 
 type InjectionVirus {
     id: String
     name: String
     injections: [Injection]
+    createdAt: Float
+    updatedAt: Float
 }
 
 type Fluorophore  {
     id: String
     name: String
     injections: [Injection]
+    createdAt: Float
+    updatedAt: Float
 }
 
 type MouseStrain {
     id: String
     name: String
     samples: [Sample]
-}
-
-type PageInfo {
-    endCursor: String
-    hasNextPage: Boolean
-}
-
-type NodeEdge {
-    node: TracingNode
-    cursor: String
-}
-
-type NodesConnection {
-    totalCount: Int
-    pageInfo: PageInfo
-    edges: [NodeEdge]
+    createdAt: Float
+    updatedAt: Float
 }
 
 type RegistrationTransform {
@@ -94,6 +84,8 @@ type BrainArea {
     acronym: String
     injections: [Injection]
     neurons: [Neuron]
+    createdAt: Float
+    updatedAt: Float
 }
 
 type StructureIdentifier {
@@ -101,36 +93,91 @@ type StructureIdentifier {
     name: String
     value: Int
     mutable: Boolean
-    nodes: [TracingNode]
+    nodes: [SwcNode]
+    createdAt: Float
+    updatedAt: Float
 }
 
-type TracingNode {
+type TracingStructure {
     id: String!
-    tracingId: String
-    structureIdentifierId: String
-    sampleNumber: Int
-    x: Float
-    y: Float
-    z: Float
-    radius: Float
-    parentNumber: Int
-    structureIdentifier: StructureIdentifier
-    tracing: Tracing
+    name: String
+    value: Int
+    createdAt: Float
+    updatedAt: Float
 }
 
-type Tracing {
+type SwcTracing {
     id: String!
-    structureIdentifierId: String
     filename: String
     annotator: String
     fileComments: String
     offsetX: Float
     offsetY: Float
     offsetZ: Float
+    nodeCount: Int
+    tracingStructure: TracingStructure
+    neuron: Neuron
+    createdAt: Float
+    updatedAt: Float
+}
+
+type SwcNode {
+    id: String!
+    sampleNumber: Int
+    parentNumber: Int
+    x: Float
+    y: Float
+    z: Float
+    radius: Float
     structureIdentifier: StructureIdentifier
-    
-    nodes(first: Int, count: Int): [TracingNode]
-    nodesConnection(first: Int, after: String): NodesConnection
+    tracing: SwcTracing
+    createdAt: Float
+    updatedAt: Float
+}
+
+type SwcTracingPage {
+    offset: Int
+    limit: Int
+    totalCount: Int
+    matchCount: Int
+    tracings: [SwcTracing!]!
+}
+
+type Error {
+    message: String
+    name: String
+}
+
+type UploadOutput {
+    tracing: SwcTracing
+    transformSubmission: Boolean
+    error: Error
+}
+
+type UpdateSwcTracingOutput {
+    tracing: SwcTracing
+    error: Error
+}
+
+type DeleteSwcTracingOutput {
+    error: Error
+}
+
+input SwcTracingInput {
+    id: String!
+    annotator: String
+    neuronId: String
+    tracingStructureId: String
+}
+
+input SwcTracingPageInput {
+    offset: Int
+    limit: Int
+    sampleId: String
+    neuronId: String
+    tracingStructureId: String
+    annotator: String
+    filename: String
 }
 
 type Query {
@@ -139,17 +186,20 @@ type Query {
     mouseStrains: [MouseStrain!]!
     mouseStrain(id: String): MouseStrain
     injections: [Injection!]!
-    tracings: [Tracing!]!
-    tracing(id: String): Tracing!
-    tracingNodes: [TracingNode!]!
-    tracingNode(id: String): TracingNode!
+    neurons(sampleId: String): [Neuron!]!
+    tracings(pageInput: SwcTracingPageInput): SwcTracingPage!
+    tracing(id: String): SwcTracing!
+    tracingNodes: [SwcNode!]!
+    tracingNode(id: String): SwcNode!
     structureIdentifiers: [StructureIdentifier!]!
     structureIdentifier(id: String): StructureIdentifier!
+    tracingStructures: [TracingStructure!]!
 }
 
 type Mutation {
-   debug(id: String!): String
-   uploadSwc(annotator: String, neuronId: String, structureId: String, files: [UploadedFile]): Boolean
+   uploadSwc(annotator: String, neuronId: String, structureId: String, files: [UploadedFile]): UploadOutput!
+   updateTracing(tracing: SwcTracingInput): UpdateSwcTracingOutput!
+   deleteTracing(tracingId: String!): DeleteSwcTracingOutput
 }
 
 schema {

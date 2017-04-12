@@ -18,9 +18,10 @@ export interface ISampleDatabaseModels {
 }
 
 export interface ISwcDatabaseModels {
-    Tracing?: any;
-    TracingNode?: any;
+    SwcTracing?: any;
+    SwcTracingNode?: any;
     StructureIdentifier?: any;
+    TracingStructure?: any;
 }
 
 export interface ISequelizeDatabase<T> {
@@ -74,12 +75,16 @@ export class PersistentStorageManager {
         return this.sampleDatabase.models.BrainArea;
     }
 
-    public get Tracings() {
-        return this.swcDatabase.models.Tracing;
+    public get SwcTracings() {
+        return this.swcDatabase.models.SwcTracing;
     }
 
-    public get TracingNodes() {
-        return this.swcDatabase.models.TracingNode;
+    public get SwcNodes() {
+        return this.swcDatabase.models.SwcTracingNode;
+    }
+
+    public get TracingStructures() {
+        return this.swcDatabase.models.TracingStructure;
     }
 
     public get StructureIdentifiers() {
@@ -88,26 +93,24 @@ export class PersistentStorageManager {
 
     public async initialize() {
         this.sampleDatabase = await createConnection("sample", {});
-        await sync(this.sampleDatabase, "sample");
+        await authenticate(this.sampleDatabase, "sample");
 
         this.swcDatabase = await createConnection("swc", {});
-        await sync(this.swcDatabase, "swc");
-
-        await this.StructureIdentifiers.populateDefault();
+        await authenticate(this.swcDatabase, "swc");
     }
 }
 
-async function sync(database, name, force = false) {
+async function authenticate(database, name) {
     try {
-        await database.connection.sync({force: force});
+        await database.connection.authenticate();
 
         database.isConnected = true;
 
-        debug(`successful ${name} database sync`);
+        debug(`successful database connection: ${name}`);
     } catch (err) {
-        debug(`failed ${name} database sync`);
+        debug(`failed database connection: ${name}`);
         debug(err);
-        setTimeout(() => sync(database, name), 5000);
+        setTimeout(() => authenticate(database, name), 5000);
     }
 }
 

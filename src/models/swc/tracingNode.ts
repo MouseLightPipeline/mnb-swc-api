@@ -1,22 +1,16 @@
-import {ITracing} from "./tracing";
-import {IStructureIdentifier} from "./structureIdentifier";
-
-export interface ITracingNode {
+export interface ISwcNode {
     id: string;
-    tracingId: string;
-    structureIdentifierId: string;
+    swcTracingId: string;
     sampleNumber: number;
     x: number;
     y: number;
     z: number;
     radius: number;
     parentNumber: number;
-
-    getTracing(): ITracing;
-    getStructureIdentifier(): IStructureIdentifier;
+    structureIdentifierId: string;
 }
 
-export const TableName = "TracingNode";
+export const TableName = "SwcTracingNode";
 
 export function sequelizeImport(sequelize, DataTypes) {
     const TracingNode = sequelize.define(TableName, {
@@ -35,11 +29,11 @@ export function sequelizeImport(sequelize, DataTypes) {
         classMethods: {
             associate: models => {
                 TracingNode.belongsTo(models.StructureIdentifier, {foreignKey: "structureIdentifierId"});
-                TracingNode.belongsTo(models.Tracing, {foreignKey: "tracingId"});
+                TracingNode.belongsTo(models.SwcTracing, {foreignKey: "swcTracingId"});
             }
         },
         timestamps: true,
-        paranoid: true
+        paranoid: false
     });
 
     return TracingNode;

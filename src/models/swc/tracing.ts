@@ -1,21 +1,29 @@
-import {ITracingNode} from "./tracingNode";
-import {ISwcParseResult} from "../../Swc";
+import {ISwcNode} from "./tracingNode";
+import {ITracingStructure} from "./tracingStructure";
 
-export interface ITracing {
+export interface ISwcTracingInput {
+    id: string;
+    annotator?: string;
+    neuronId?: string;
+    tracingStructureId?: string;
+}
+
+export interface ISwcTracing {
     id: string;
     neuronId: string;
-    structureIdentifierId: string;
     filename: string;
     annotator: string;
     fileComments: string;
     offsetX: number;
     offsetY: number;
     offsetZ: number;
+    tracingStructureId: string;
 
-    getNodes(): ITracingNode[];
+    getNodes(): ISwcNode[];
+    getTracingStructure(): ITracingStructure;
 }
 
-export const TableName = "Tracing";
+export const TableName = "SwcTracing";
 
 export function sequelizeImport(sequelize, DataTypes) {
     const Tracing = sequelize.define(TableName, {
@@ -26,17 +34,11 @@ export function sequelizeImport(sequelize, DataTypes) {
         },
         // reference to external sample database entry
         neuronId: DataTypes.UUID,
-        annotator: {
-            type: DataTypes.TEXT,
-            defaultValue: ""
-        },
-        // From uploaded file data
         filename: {
             type: DataTypes.TEXT,
             defaultValue: ""
         },
-        // Local storage, if kept
-        storedFilePath: {
+        annotator: {
             type: DataTypes.TEXT,
             defaultValue: ""
         },
@@ -61,12 +63,12 @@ export function sequelizeImport(sequelize, DataTypes) {
     }, {
         classMethods: {
             associate: models => {
-                Tracing.hasMany(models.TracingNode, {foreignKey: "tracingId", as: "nodes"});
-                Tracing.belongsTo(models.StructureIdentifier, {foreignKey: "structureIdentifierId"});
+                Tracing.hasMany(models.SwcTracingNode, {foreignKey: "swcTracingId", as: "Nodes"});
+                Tracing.belongsTo(models.TracingStructure, {foreignKey: "tracingStructureId"});
             }
         },
         timestamps: true,
-        paranoid: true
+        paranoid: false
     });
 
     return Tracing;

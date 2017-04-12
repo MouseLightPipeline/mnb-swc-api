@@ -1,36 +1,51 @@
+import {IRegistrationTransform} from "../models/sample/registrationTransform";
 const debug = require("debug")("ndb:swc-api:resolvers");
 
-import {IGraphQLServerContext, INodeConnections} from "./serverContext";
+import {
+    IDeleteSwcTracingOutput,
+    IGraphQLServerContext,
+    ISwcTracingPage,
+    ISwcTracingPageInput,
+    IUpdateSwcTracingOutput,
+    IUploadOutput
+} from "./serverContext";
 
 import {ISample} from "../models/sample/sample";
 import {INeuron} from "../models/sample/neuron";
 import {IInjection} from "../models/sample/injection";
-import {ITracing} from "../models/swc/tracing";
-import {ITracingNode} from "../models/swc/tracingNode";
+import {ISwcTracing, ISwcTracingInput} from "../models/swc/tracing";
+import {ISwcNode} from "../models/swc/tracingNode";
 import {IStructureIdentifier} from "../models/swc/structureIdentifier";
 import {IFluorophore} from "../models/sample/fluorophore";
 import {IInjectionVirus} from "../models/sample/InjectionVirus";
 import {IBrainArea} from "../models/sample/brainArea";
 import {IMouseStrain} from "../models/sample/mousestrain";
+import {ITracingStructure} from "../models/swc/tracingStructure";
 
 interface IIdOnlyArguments {
     id: string;
 }
 
-interface ISimplePaginationArguments {
-    first: number;
-    count: number;
+interface ITracingIdArguments {
+    tracingId: string;
 }
 
-interface IConnectionArguments {
-    first: number;
-    after: string;
+interface ISampleIdArguments {
+    sampleId: string;
+}
+
+interface ITracingsArguments {
+    pageInput: ISwcTracingPageInput;
 }
 
 interface ITracingUploadArguments {
     annotator: string;
     neuronId: string;
     structureId: string;
+}
+
+interface IUpdateTracingArguments {
+    tracing: ISwcTracingInput;
 }
 
 const resolvers = {
@@ -47,19 +62,22 @@ const resolvers = {
         mouseStrain(_, args: IIdOnlyArguments, context: IGraphQLServerContext): Promise<IMouseStrain> {
             return context.getMouseStrain(args.id);
         },
-        tracings(_, __, context: IGraphQLServerContext): Promise<ITracing[]> {
-            return context.getTracings();
+        neurons(_, args: ISampleIdArguments, context: IGraphQLServerContext): Promise<INeuron[]> {
+            return context.getNeurons(args.sampleId);
         },
         injections(_, __, context: IGraphQLServerContext): Promise<IInjection[]> {
             return context.getInjections();
         },
-        tracing(_, args: IIdOnlyArguments, context: IGraphQLServerContext): Promise<ITracing> {
+        tracings(_, args: ITracingsArguments, context: IGraphQLServerContext): Promise<ISwcTracingPage> {
+            return context.getTracings(args.pageInput);
+        },
+        tracing(_, args: IIdOnlyArguments, context: IGraphQLServerContext): Promise<ISwcTracing> {
             return context.getTracing(args.id);
         },
-        tracingNodes(_, __, context: IGraphQLServerContext): Promise<ITracingNode[]> {
+        tracingNodes(_, __, context: IGraphQLServerContext): Promise<ISwcNode[]> {
             return context.getTracingNodes();
         },
-        tracingNode(_, args: IIdOnlyArguments, context: IGraphQLServerContext): Promise<ITracingNode> {
+        tracingNode(_, args: IIdOnlyArguments, context: IGraphQLServerContext): Promise<ISwcNode> {
             return context.getTracingNode(args.id);
         },
         structureIdentifiers(_, __, context: IGraphQLServerContext): Promise<IStructureIdentifier[]> {
@@ -67,30 +85,51 @@ const resolvers = {
         },
         structureIdentifier(_, args: IIdOnlyArguments, context: IGraphQLServerContext): Promise<IStructureIdentifier> {
             return context.getStructureIdentifier(args.id);
+        },
+        tracingStructures(_, __, context: IGraphQLServerContext): Promise<ITracingStructure[]> {
+            return context.getTracingStructures();
         }
     },
     Mutation: {
-        debug(_, args: IIdOnlyArguments, context: IGraphQLServerContext): string {
-            return "message";
-        },
-        uploadSwc(_, args: ITracingUploadArguments, context: IGraphQLServerContext): Promise<boolean> {
+        uploadSwc(_, args: ITracingUploadArguments, context: IGraphQLServerContext): Promise<IUploadOutput> {
             return context.receiveSwcUpload(args.annotator, args.neuronId, args.structureId);
+        },
+        updateTracing(_, args: IUpdateTracingArguments, context: IGraphQLServerContext): Promise<IUpdateSwcTracingOutput> {
+            return context.updateTracing(args.tracing);
+        },
+        deleteTracing(_, args: ITracingIdArguments, context: IGraphQLServerContext): Promise<IDeleteSwcTracingOutput> {
+            return context.deleteTracing(args.tracingId);
         }
     },
     Sample: {
         injections(sample, _, context: IGraphQLServerContext): Promise<IInjection[]> {
+            if (!sample || !sample.id || sample.id.length === 0) {
+                return null;
+            }
+
             return context.getInjectionsForSample(sample);
         },
         mouseStrain(sample, _, context: IGraphQLServerContext): Promise<IMouseStrain> {
-            if (!sample) {
+            if (!sample || !sample.mouseStrainId || sample.mouseStrainId.length === 0) {
                 return null;
             }
+
             return context.getMouseStrain(sample.mouseStrainId);
+        },
+        activeRegistrationTransform(sample, _, context: IGraphQLServerContext): Promise<IRegistrationTransform> {
+            if (!sample || !sample.activeRegistrationId || sample.activeRegistrationId.length === 0) {
+                return null;
+            }
+
+            return context.getRegistrationTransform(sample.activeRegistrationId);
         }
     },
     Neuron: {
         brainArea(neuron, _, context: IGraphQLServerContext): Promise<IBrainArea> {
             return context.getBrainAreaForNeuron(neuron);
+        },
+        injection(neuron, _, context: IGraphQLServerContext): Promise<IInjection> {
+            return context.getInjection(neuron.injectionId);
         }
     },
     Injection: {
@@ -107,19 +146,19 @@ const resolvers = {
             return context.getBrainAreaForInjection(injection);
         }
     },
-    Tracing: {
-        nodes(tracing, args: ISimplePaginationArguments, context: IGraphQLServerContext): Promise<ITracingNode[]> {
-            return context.getNodesForTracing(tracing, args.first, args.count);
+    SwcTracing: {
+        nodeCount(tracing, __, context: IGraphQLServerContext): Promise<number> {
+            return context.getNodeCount(tracing);
         },
-        nodesConnection(tracing, args: IConnectionArguments, context: IGraphQLServerContext): Promise<INodeConnections> {
-            return context.getNodesConnectionForTracing(tracing, args.first, args.after);
-        },
-        structureIdentifier(tracing, _, context: IGraphQLServerContext): Promise<IStructureIdentifier> {
+        tracingStructure(tracing, _, context: IGraphQLServerContext): Promise<IStructureIdentifier> {
             return context.getStructureForTracing(tracing);
+        },
+        neuron(tracing, _, context: IGraphQLServerContext): Promise<INeuron> {
+            return context.getNeuron(tracing.neuronId);
         }
     },
-    TracingNode: {
-        tracing(tracingNode, _, context: IGraphQLServerContext): Promise<ITracing> {
+    SwcNode: {
+        tracing(tracingNode, _, context: IGraphQLServerContext): Promise<ISwcTracing> {
             return context.getTracingForNode(tracingNode);
         },
         structureIdentifier(tracingNode, _, context: IGraphQLServerContext): Promise<IStructureIdentifier> {
@@ -127,7 +166,7 @@ const resolvers = {
         }
     },
     StructureIdentifier: {
-        nodes(structureIdentifier, _, context: IGraphQLServerContext): Promise<ITracingNode[]> {
+        nodes(structureIdentifier, _, context: IGraphQLServerContext): Promise<ISwcNode[]> {
             return context.getNodesForStructure(structureIdentifier);
         }
     }
