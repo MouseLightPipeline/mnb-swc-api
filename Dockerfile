@@ -2,7 +2,7 @@ FROM node:7.5
 
 WORKDIR /app
 
-RUN npm install -g yarn
+RUN npm install -g yarn typescript
 
 COPY . .
 
