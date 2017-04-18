@@ -20,6 +20,6 @@ app.use(multer({dest: "uploads"}).any());
 
 app.use(serverConfiguration.graphQlEndpoint, graphQLMiddleware());
 
-app.use(serverConfiguration.graphiQlEndpoint, graphiQLMiddleware(serverConfiguration));
+app.use(["/", serverConfiguration.graphiQlEndpoint], graphiQLMiddleware(serverConfiguration));
 
 app.listen(PORT, () => debug(`swc api server is now running on http://localhost:${PORT}`));
