@@ -43,6 +43,11 @@ export interface IUploadOutput {
     error: Error;
 }
 
+export interface IQueryTracingsForSwcOutput {
+    count: number;
+    error: Error;
+}
+
 export interface IUpdateSwcTracingOutput {
     tracing: ISwcTracing;
     error: Error;
@@ -96,6 +101,7 @@ export interface IGraphQLServerContext {
     getTracingStructures(): Promise<ITracingStructure[]>;
 
     // Mutation
+    transformedTracingsForSwc(id: String): Promise<IQueryTracingsForSwcOutput>
     receiveSwcUpload(annotator: string, neuronId: string, structureIdentifierId: string): Promise<IUploadOutput>;
     updateTracing(tracingInput: ISwcTracingInput): Promise<IUpdateSwcTracingOutput>;
     deleteTracing(id: string): Promise<IDeleteSwcTracingOutput>;
@@ -482,6 +488,29 @@ export class GraphQLServerContext implements IGraphQLServerContext {
         }
     }
 
+    public async transformedTracingsForSwc(id: String): Promise<IQueryTracingsForSwcOutput> {
+        let tracing = await this._storageManager.SwcTracings.findById(id);
+
+        if (!tracing) {
+            return {count: -1, error: {name: "DoesNotExistError", message: "A tracing with that id does not exist"}};
+        }
+
+        try {
+            const out = await transformClient.queryTracing(id);
+
+            return {count: out.data.tracings.tracings.length, error: null};
+        } catch (err) {
+            debug(err);
+            return {
+                count: -1,
+                error: {
+                    name: "TransformApiError",
+                    message: "Could not reach the server to count transformed tracings"
+                }
+            };
+        }
+    }
+
     public async deleteTracing(id: string): Promise<IDeleteSwcTracingOutput> {
         let tracing = await this._storageManager.SwcTracings.findById(id);
 
@@ -512,7 +541,7 @@ export class GraphQLServerContext implements IGraphQLServerContext {
                     return {error: out.data.deleteTracings.error[0]};
                 }
             }
-       } catch (err) {
+        } catch (err) {
             debug(err);
             return {
                 error: {

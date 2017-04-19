@@ -154,6 +154,11 @@ type UploadOutput {
     error: Error
 }
 
+type TracingsForSwcOutput {
+    count: Int
+    error: Error
+}
+
 type UpdateSwcTracingOutput {
     tracing: SwcTracing
     error: Error
@@ -198,6 +203,7 @@ type Query {
 
 type Mutation {
    uploadSwc(annotator: String, neuronId: String, structureId: String, files: [UploadedFile]): UploadOutput!
+   transformedTracingsForSwc(id: String): TracingsForSwcOutput
    updateTracing(tracing: SwcTracingInput): UpdateSwcTracingOutput!
    deleteTracing(tracingId: String!): DeleteSwcTracingOutput
 }

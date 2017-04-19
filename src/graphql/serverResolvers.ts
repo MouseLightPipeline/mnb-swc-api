@@ -3,7 +3,7 @@ const debug = require("debug")("ndb:swc-api:resolvers");
 
 import {
     IDeleteSwcTracingOutput,
-    IGraphQLServerContext,
+    IGraphQLServerContext, IQueryTracingsForSwcOutput,
     ISwcTracingPage,
     ISwcTracingPageInput,
     IUpdateSwcTracingOutput,
@@ -93,6 +93,9 @@ const resolvers = {
     Mutation: {
         uploadSwc(_, args: ITracingUploadArguments, context: IGraphQLServerContext): Promise<IUploadOutput> {
             return context.receiveSwcUpload(args.annotator, args.neuronId, args.structureId);
+        },
+        transformedTracingsForSwc(_, args: IIdOnlyArguments, context: IGraphQLServerContext): Promise<IQueryTracingsForSwcOutput> {
+            return context.transformedTracingsForSwc(args.id);
         },
         updateTracing(_, args: IUpdateTracingArguments, context: IGraphQLServerContext): Promise<IUpdateSwcTracingOutput> {
             return context.updateTracing(args.tracing);
