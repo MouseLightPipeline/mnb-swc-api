@@ -4,6 +4,7 @@ interface ITransformService {
     host: string;
     port: number;
 }
+
 interface IServerConfig {
     port: number;
     graphQlEndpoint: string;

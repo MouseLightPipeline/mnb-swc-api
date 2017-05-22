@@ -54,6 +54,7 @@ export interface IUpdateSwcTracingOutput {
 }
 
 export interface IDeleteSwcTracingOutput {
+    id: string;
     error: Error;
 }
 
@@ -105,6 +106,8 @@ export interface IGraphQLServerContext {
     receiveSwcUpload(annotator: string, neuronId: string, structureIdentifierId: string): Promise<IUploadOutput>;
     updateTracing(tracingInput: ISwcTracingInput): Promise<IUpdateSwcTracingOutput>;
     deleteTracing(id: string): Promise<IDeleteSwcTracingOutput>;
+    deleteTracings(ids: string[]): Promise<IDeleteSwcTracingOutput[]>;
+    deleteTracingsForNeurons(ids: string[]): Promise<IDeleteSwcTracingOutput[]>;
 }
 
 export class GraphQLServerContext implements IGraphQLServerContext {
@@ -515,35 +518,23 @@ export class GraphQLServerContext implements IGraphQLServerContext {
         let tracing = await this._storageManager.SwcTracings.findById(id);
 
         if (!tracing) {
-            return {error: {name: "DoesNotExistError", message: "A tracing with that id does not exist"}};
+            return {id, error: {name: "DoesNotExistError", message: "A tracing with that id does not exist"}};
         }
 
         let out = null;
 
         try {
-            out = await transformClient.queryTracing(id);
+            out = await transformClient.deleteTracingsForSwc([id]);
 
-            let tracings: any[] = out.data.tracings.tracings;
+            const errors = out.data.deleteTracingsForSwc.filter(r => r.error !== null);
 
-            // Results could be unpredictable deleting while transform in progress
-            if (tracings.length > 0) {
-                if (tracings.some(t => t.transformStatus)) {
-                    return {
-                        error: {
-                            name: "TransformInProgressError",
-                            message: "A registration transform is in progress for the tracing - please wait for it to complete"
-                        }
-                    }
-                }
-                out = await transformClient.deleteTracings([out.data.tracings.tracings.map(t => t.id)]);
-
-                if (out.data.deleteTracings.error) {
-                    return {error: out.data.deleteTracings.error[0]};
-                }
+            if (errors.length > 0) {
+                return {id, error: errors[0].error};
             }
         } catch (err) {
             debug(err);
             return {
+                id,
                 error: {
                     name: "TransformApiError",
                     message: "Could not reach the registered tracing server to verify usage"
@@ -564,10 +555,27 @@ export class GraphQLServerContext implements IGraphQLServerContext {
 
         } catch (err) {
             debug(err);
-            return {error: {name: err.name, message: err.message}};
+            return {id, error: {name: err.name, message: err.message}};
         }
 
-        return {error: null};
+        return {id, error: null};
+    }
+
+
+    public async deleteTracings(ids: string[]): Promise<IDeleteSwcTracingOutput[]> {
+        if (!ids) {
+            return null;
+        }
+
+        return Promise.all(ids.map((id => {
+            return this.deleteTracing(id);
+        })));
+    }
+
+    public async deleteTracingsForNeurons(ids: string[]): Promise<IDeleteSwcTracingOutput[]> {
+        const tracingIds = await this._storageManager.SwcTracings.findAll({where: {neuronId: {$in: ids}}}).map(o => o.id);
+
+        return this.deleteTracings(tracingIds);
     }
 }
 

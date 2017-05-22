@@ -26,8 +26,12 @@ interface IIdOnlyArguments {
     id: string;
 }
 
-interface ITracingIdArguments {
-    tracingId: string;
+interface IIdsArguments {
+    ids: string[];
+}
+
+interface INeuronIdsArguments {
+    neuronIds: string[];
 }
 
 interface ISampleIdArguments {
@@ -100,8 +104,14 @@ const resolvers = {
         updateTracing(_, args: IUpdateTracingArguments, context: IGraphQLServerContext): Promise<IUpdateSwcTracingOutput> {
             return context.updateTracing(args.tracing);
         },
-        deleteTracing(_, args: ITracingIdArguments, context: IGraphQLServerContext): Promise<IDeleteSwcTracingOutput> {
-            return context.deleteTracing(args.tracingId);
+        deleteTracing(_, args: IIdOnlyArguments, context: IGraphQLServerContext): Promise<IDeleteSwcTracingOutput> {
+            return context.deleteTracing(args.id);
+        },
+        deleteTracings(_, args: IIdsArguments, context: IGraphQLServerContext): Promise<IDeleteSwcTracingOutput[]> {
+            return context.deleteTracings(args.ids);
+        },
+        deleteTracingsForNeurons(_, args: INeuronIdsArguments, context: IGraphQLServerContext): Promise<IDeleteSwcTracingOutput[]> {
+            return context.deleteTracingsForNeurons(args.neuronIds);
         }
     },
     Sample: {

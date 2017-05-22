@@ -1,8 +1,10 @@
+import * as fs from "fs";
 const Sequelize = require("sequelize");
 
 const debug = require("debug")("ndb:swc-api:database-connector");
 
 import {loadModels} from "./modelLoader";
+import * as path from "path";
 
 const config = require(__dirname + "/../config/database.config");
 
@@ -92,7 +94,7 @@ export class PersistentStorageManager {
     }
 
     public async initialize() {
-        this.sampleDatabase = await createConnection("sample", {});
+        this.sampleDatabase = await createConnection<ISampleDatabaseModels>("sample", {});
         await authenticate(this.sampleDatabase, "sample");
 
         this.swcDatabase = await createConnection("swc", {});
@@ -117,7 +119,16 @@ async function authenticate(database, name) {
 async function createConnection<T>(name: string, models: T) {
     const env = process.env.NODE_ENV || "development";
 
-    const databaseConfig = config[name][env];
+    const databaseEnv = process.env.DATABASE_ENV || env;
+
+    let databaseConfig = config[name][databaseEnv];
+
+    const sFile = path.normalize(path.join(__dirname, "../config/secrets.config"));
+
+    if (fs.existsSync(sFile + ".js")) {
+        const secrets = require(sFile);
+        databaseConfig = Object.assign(databaseConfig, secrets[name][databaseEnv]);
+    }
 
     let db: ISequelizeDatabase<T> = {
         connection: null,

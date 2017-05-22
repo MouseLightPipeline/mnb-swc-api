@@ -64,19 +64,19 @@ export class TransformApiClient {
         });
     }
 
-    deleteTracings(ids: string[]) {
+    deleteTracingsForSwc(ids: string[]) {
         return this._client.mutate({
             mutation: gql`
-                mutation deleteTracings($tracingIds: [String!]) {
-                  deleteTracings(tracingIds: $tracingIds) {
-                    error {
-                      name
-                      message
+                mutation DeleteTracingsForSwc($swcTracingIds: [String!]) {
+                    deleteTracingsForSwc(swcTracingIds: $swcTracingIds) {
+                        error {
+                            name
+                            message
+                        }
                     }
-                  }
                 }`,
             variables: {
-                tracingIds: ids
+                swcTracingIds: ids
             }
         });
     }

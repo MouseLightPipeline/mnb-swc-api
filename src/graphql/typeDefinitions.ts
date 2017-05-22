@@ -165,6 +165,7 @@ type UpdateSwcTracingOutput {
 }
 
 type DeleteSwcTracingOutput {
+    id: String
     error: Error
 }
 
@@ -203,9 +204,14 @@ type Query {
 
 type Mutation {
    uploadSwc(annotator: String, neuronId: String, structureId: String, files: [UploadedFile]): UploadOutput!
+   
    transformedTracingsForSwc(id: String): TracingsForSwcOutput
+   
    updateTracing(tracing: SwcTracingInput): UpdateSwcTracingOutput!
-   deleteTracing(tracingId: String!): DeleteSwcTracingOutput
+   
+   deleteTracing(id: String!): DeleteSwcTracingOutput
+   deleteTracings(ids: [String!]): [DeleteSwcTracingOutput]
+   deleteTracingsForNeurons(neuronIds: [String!]): [DeleteSwcTracingOutput]
 }
 
 schema {
