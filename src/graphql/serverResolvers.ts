@@ -42,6 +42,11 @@ interface ITracingsArguments {
     pageInput: ISwcTracingPageInput;
 }
 
+
+interface ITracingUpdateSwcArguments {
+    id: string;
+}
+
 interface ITracingUploadArguments {
     annotator: string;
     neuronId: string;
@@ -97,6 +102,9 @@ const resolvers = {
     Mutation: {
         uploadSwc(_, args: ITracingUploadArguments, context: IGraphQLServerContext): Promise<IUploadOutput> {
             return context.receiveSwcUpload(args.annotator, args.neuronId, args.structureId);
+        },
+        updateSwc(_, args: ITracingUpdateSwcArguments, context: IGraphQLServerContext): Promise<IUploadOutput> {
+            return context.receiveSwcUpdate(args.id);
         },
         transformedTracingsForSwc(_, args: IIdOnlyArguments, context: IGraphQLServerContext): Promise<IQueryTracingsForSwcOutput> {
             return context.transformedTracingsForSwc(args.id);

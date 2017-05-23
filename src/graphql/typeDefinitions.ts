@@ -204,6 +204,7 @@ type Query {
 
 type Mutation {
    uploadSwc(annotator: String, neuronId: String, structureId: String, files: [UploadedFile]): UploadOutput!
+   updateSwc(id: String, files: [UploadedFile]): UploadOutput!
    
    transformedTracingsForSwc(id: String): TracingsForSwcOutput
    

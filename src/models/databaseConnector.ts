@@ -99,6 +99,12 @@ export class PersistentStorageManager {
 
         this.swcDatabase = await createConnection("swc", {});
         await authenticate(this.swcDatabase, "swc");
+
+        Object.keys(this.swcDatabase.models).map(modelName => {
+            if (this.swcDatabase.models[modelName].prepareContents) {
+                this.swcDatabase.models[modelName].prepareContents(this.swcDatabase.models);
+            }
+        });
     }
 }
 
