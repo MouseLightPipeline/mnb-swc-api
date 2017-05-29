@@ -1,6 +1,6 @@
 {
   "name": "swc-api",
-  "version": "1.0.3",
+  "version": "1.0.7",
   "private": true,
   "main": "src/swcApp.js",
   "repository": "https://github.com/MouseLightDataBrowser/swc-api.git",
@@ -27,6 +27,7 @@
     "lodash": "^4.17.4",
     "mssql": "^4.0.4",
     "multer": "^1.3.0",
+    "ndb-data-models": "^0.7.9",
     "pg": "^6.1.2",
     "sequelize": "^3.30.2"
   },

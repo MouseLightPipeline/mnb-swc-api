@@ -9,15 +9,11 @@ import {PersistentStorageManager} from "../models/databaseConnector";
 import {ISwcTracing, ISwcTracingInput} from "../models/swc/tracing";
 import {ISwcNode} from "../models/swc/tracingNode";
 import {IStructureIdentifier} from "../models/swc/structureIdentifier";
-import {ISample} from "../models/sample/sample";
-import {INeuron} from "../models/sample/neuron";
-import {IInjection} from "../models/sample/injection";
-import {IInjectionVirus} from "../models/sample/InjectionVirus";
-import {IFluorophore} from "../models/sample/fluorophore";
-import {IBrainArea} from "../models/sample/brainArea";
-import {IMouseStrain} from "../models/sample/mousestrain";
 import {ITracingStructure} from "../models/swc/tracingStructure";
-import {IRegistrationTransform} from "../models/sample/registrationTransform";
+import {
+    IBrainArea, IFluorophore, IInjection, IInjectionVirus, IMouseStrain, INeuron, IRegistrationTransform,
+    ISample
+} from "ndb-data-models";
 
 export interface ISwcTracingPageInput {
     offset: number;

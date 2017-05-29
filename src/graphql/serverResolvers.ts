@@ -1,4 +1,3 @@
-import {IRegistrationTransform} from "../models/sample/registrationTransform";
 const debug = require("debug")("ndb:swc-api:resolvers");
 
 import {
@@ -10,17 +9,14 @@ import {
     IUploadOutput
 } from "./serverContext";
 
-import {ISample} from "../models/sample/sample";
-import {INeuron} from "../models/sample/neuron";
-import {IInjection} from "../models/sample/injection";
 import {ISwcTracing, ISwcTracingInput} from "../models/swc/tracing";
 import {ISwcNode} from "../models/swc/tracingNode";
 import {IStructureIdentifier} from "../models/swc/structureIdentifier";
-import {IFluorophore} from "../models/sample/fluorophore";
-import {IInjectionVirus} from "../models/sample/InjectionVirus";
-import {IBrainArea} from "../models/sample/brainArea";
-import {IMouseStrain} from "../models/sample/mousestrain";
 import {ITracingStructure} from "../models/swc/tracingStructure";
+import {
+    IBrainArea, IFluorophore, IInjection, IInjectionVirus, IMouseStrain, INeuron, IRegistrationTransform,
+    ISample
+} from "ndb-data-models";
 
 interface IIdOnlyArguments {
     id: string;

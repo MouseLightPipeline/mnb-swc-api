@@ -6,13 +6,13 @@ require("isomorphic-fetch");
 
 const debug = require("debug")("ndb:swc-api:transform-client");
 
-import {serverConfiguration} from "../config/server.config";
+import {TransformServiceOptions} from "../options/serviceOptions";
 
 export class TransformApiClient {
     private _client: any;
 
     constructor() {
-        const url = `http://${serverConfiguration.transformService.host}:${serverConfiguration.transformService.port}/graphql`;
+        const url = `http://${TransformServiceOptions.host}:${TransformServiceOptions.port}/graphql`;
 
         debug(`creating apollo client for transform service ${url}`);
         const networkInterface = createNetworkInterface({uri: url});

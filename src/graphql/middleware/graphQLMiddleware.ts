@@ -2,13 +2,14 @@ import { graphqlExpress, graphiqlExpress } from "graphql-server-express";
 
 import {schema} from "./schema";
 import {GraphQLServerContext} from "../serverContext";
+import {IServiceOptions} from "../../options/serviceOptions";
 
 export function graphQLMiddleware() {
     return graphqlExpress(graphqlRequestHandler);
 }
 
-export function graphiQLMiddleware(configuration) {
-    return graphiqlExpress({endpointURL: configuration.graphQlEndpoint});
+export function graphiQLMiddleware(configuration: IServiceOptions) {
+    return graphiqlExpress({endpointURL: configuration.serverOptions.graphQlEndpoint});
 }
 
 function graphqlRequestHandler(req) {

@@ -1,12 +1,10 @@
-import * as fs from "fs";
 const Sequelize = require("sequelize");
 
 const debug = require("debug")("ndb:swc-api:database-connector");
 
 import {loadModels} from "./modelLoader";
-import * as path from "path";
-
-const config = require(__dirname + "/../config/database.config");
+import {DatabaseOptions} from "../options/serviceOptions";
+import {SampleConnector} from "ndb-data-models";
 
 export interface ISampleDatabaseModels {
     BrainArea?: any
@@ -94,17 +92,10 @@ export class PersistentStorageManager {
     }
 
     public async initialize() {
-        this.sampleDatabase = await createConnection<ISampleDatabaseModels>("sample", {});
-        await authenticate(this.sampleDatabase, "sample");
+        this.sampleDatabase = await createSampleConnection();
 
         this.swcDatabase = await createConnection("swc", {});
         await authenticate(this.swcDatabase, "swc");
-
-        Object.keys(this.swcDatabase.models).map(modelName => {
-            if (this.swcDatabase.models[modelName].prepareContents) {
-                this.swcDatabase.models[modelName].prepareContents(this.swcDatabase.models);
-            }
-        });
     }
 }
 
@@ -115,6 +106,14 @@ async function authenticate(database, name) {
         database.isConnected = true;
 
         debug(`successful database connection: ${name}`);
+
+        if (name === "swc") {
+            Object.keys(database.models).map(modelName => {
+                if (database.models[modelName].prepareContents) {
+                    database.models[modelName].prepareContents(database.models);
+                }
+            });
+        }
     } catch (err) {
         debug(`failed database connection: ${name}`);
         debug(err);
@@ -123,18 +122,7 @@ async function authenticate(database, name) {
 }
 
 async function createConnection<T>(name: string, models: T) {
-    const env = process.env.NODE_ENV || "development";
-
-    const databaseEnv = process.env.DATABASE_ENV || env;
-
-    let databaseConfig = config[name][databaseEnv];
-
-    const sFile = path.normalize(path.join(__dirname, "../config/secrets.config"));
-
-    if (fs.existsSync(sFile + ".js")) {
-        const secrets = require(sFile);
-        databaseConfig = Object.assign(databaseConfig, secrets[name][databaseEnv]);
-    }
+    let databaseConfig = DatabaseOptions[name];
 
     let db: ISequelizeDatabase<T> = {
         connection: null,
@@ -145,6 +133,14 @@ async function createConnection<T>(name: string, models: T) {
     db.connection = new Sequelize(databaseConfig.database, databaseConfig.username, databaseConfig.password, databaseConfig);
 
     return await loadModels(db, __dirname + "/" + name);
+}
+
+async function createSampleConnection(): Promise<SampleConnector> {
+    const connector = new SampleConnector(DatabaseOptions.sample);
+
+    await connector.authenticate();
+
+    return connector;
 }
 
 const _manager: PersistentStorageManager = new PersistentStorageManager();

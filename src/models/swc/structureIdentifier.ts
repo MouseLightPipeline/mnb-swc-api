@@ -41,15 +41,12 @@ export function sequelizeImport(sequelize, DataTypes) {
     });
 
     const valueIdMap = new Map<number, string>();
-    const idValueMap = new Map<string, number>();
 
     StructureIdentifier.buildIdValueMap = async () => {
         if (valueIdMap.size === 0) {
             const all = await StructureIdentifier.findAll({});
-
             all.forEach(s => {
                 valueIdMap.set(s.value, s.id);
-                idValueMap.set(s.id, s.value);
             });
         }
     };
@@ -58,37 +55,8 @@ export function sequelizeImport(sequelize, DataTypes) {
         return valueIdMap.get(val);
     };
 
-    StructureIdentifier.countColumnName = (s: number | string | IStructureIdentifier) => {
-        if (s === null || s === undefined) {
-            return null;
-        }
-
-        let value: number = null;
-
-        if (typeof s === "number") {
-            value = s;
-        } else if (typeof s === "string") {
-            value = idValueMap.get(s);
-        } else {
-            value = s.value;
-        }
-
-        if (value === null || value === undefined) {
-            return null;
-        }
-
-        switch (value) {
-            case StructureIdentifiers.soma:
-                return "somaCount";
-            case StructureIdentifiers.undefined:
-                return "pathCount";
-            case StructureIdentifiers.forkPoint:
-                return "branchCount";
-            case  StructureIdentifiers.endPoint:
-                return "endCount";
-        }
-
-        return null;
+    StructureIdentifier.structuresAreLoaded = () => {
+        return valueIdMap.size > 0;
     };
 
     return StructureIdentifier;
