@@ -1249,7 +1249,7 @@ natives@^1.1.0:
   version "1.1.0"
   resolved "https://registry.yarnpkg.com/natives/-/natives-1.1.0.tgz#e9ff841418a6b2ec7a495e939984f78f163e6e31"
 
-ndb-data-models@^0.7.9:
+ndb-data-models@^0.7.12:
   version "0.7.12"
   resolved "https://registry.yarnpkg.com/ndb-data-models/-/ndb-data-models-0.7.12.tgz#643de62b7b90ce8ee0e62f6f1a7a895fceaf9425"
   dependencies:
