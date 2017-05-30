@@ -93,6 +93,9 @@ const resolvers = {
         },
         tracingStructures(_, __, context: IGraphQLServerContext): Promise<ITracingStructure[]> {
             return context.getTracingStructures();
+        },
+        systemMessage(): String {
+            return systemMessage;
         }
     },
     Mutation: {
@@ -105,6 +108,7 @@ const resolvers = {
         transformedTracingsForSwc(_, args: IIdOnlyArguments, context: IGraphQLServerContext): Promise<IQueryTracingsForSwcOutput> {
             return context.transformedTracingsForSwc(args.id);
         },
+
         updateTracing(_, args: IUpdateTracingArguments, context: IGraphQLServerContext): Promise<IUpdateSwcTracingOutput> {
             return context.updateTracing(args.tracing);
         },
@@ -116,6 +120,17 @@ const resolvers = {
         },
         deleteTracingsForNeurons(_, args: INeuronIdsArguments, context: IGraphQLServerContext): Promise<IDeleteSwcTracingOutput[]> {
             return context.deleteTracingsForNeurons(args.neuronIds);
+        },
+
+        setSystemMessage(_, args: any): boolean {
+            systemMessage = args.message;
+
+            return true;
+        },
+        clearSystemMessage(): boolean {
+            systemMessage = "";
+
+            return true;
         }
     },
     Sample: {
@@ -188,5 +203,7 @@ const resolvers = {
         }
     }
 };
+
+let systemMessage: String = "";
 
 export default resolvers;

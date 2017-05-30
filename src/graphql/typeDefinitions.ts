@@ -200,6 +200,8 @@ type Query {
     structureIdentifiers: [StructureIdentifier!]!
     structureIdentifier(id: String): StructureIdentifier!
     tracingStructures: [TracingStructure!]!
+
+    systemMessage: String
 }
 
 type Mutation {
@@ -213,6 +215,9 @@ type Mutation {
    deleteTracing(id: String!): DeleteSwcTracingOutput
    deleteTracings(ids: [String!]): [DeleteSwcTracingOutput]
    deleteTracingsForNeurons(neuronIds: [String!]): [DeleteSwcTracingOutput]
+   
+   setSystemMessage(message: String): Boolean
+   clearSystemMessage: Boolean
 }
 
 schema {
