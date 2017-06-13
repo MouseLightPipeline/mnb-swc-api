@@ -19,7 +19,7 @@ export interface ISwcTracingPageInput {
     offset: number;
     limit: number;
     sampleId: string;
-    neuronId: string;
+    neuronIds: string[];
     tracingStructureId: string;
     annotator: string;
     filename: string;
@@ -229,6 +229,10 @@ export class GraphQLServerContext implements IGraphQLServerContext {
         if (queryInput) {
             if (queryInput.tracingStructureId) {
                 options.where["tracingStructureId"] = queryInput.tracingStructureId;
+            }
+
+            if (queryInput.neuronIds && queryInput.neuronIds.length > 0) {
+                options.where["neuronId"] = {$in: queryInput.neuronIds}
             }
 
             out.matchCount = await this._storageManager.SwcTracings.count(options);
@@ -684,9 +688,9 @@ function decodeObj64(str: string) {
 }
 
 function encode64(str: string) {
-    return (new Buffer(str, 'ascii')).toString('base64');
+    return (new Buffer(str, "ascii")).toString("base64");
 }
 
 function decode64(str: string) {
-    return (new Buffer(str, 'base64')).toString('ascii');
+    return (new Buffer(str, "base64")).toString("ascii");
 }

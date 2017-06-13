@@ -180,7 +180,7 @@ input SwcTracingPageInput {
     offset: Int
     limit: Int
     sampleId: String
-    neuronId: String
+    neuronIds: [String!]
     tracingStructureId: String
     annotator: String
     filename: String
