@@ -60,7 +60,7 @@ const configurations: IConfiguration<IServiceOptions> = {
             swc: null
         },
         transformService: {
-            host: "localhost",
+            host: "transform-api",
             port: 9661
         }
     },
@@ -76,7 +76,7 @@ const configurations: IConfiguration<IServiceOptions> = {
             swc: null
         },
         transformService: {
-            host: "localhost",
+            host: "transform-api",
             port: 9661
         }
     }

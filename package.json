@@ -1,6 +1,6 @@
 {
   "name": "swc-api",
-  "version": "1.0.10",
+  "version": "1.0.11",
   "private": true,
   "main": "src/swcApp.js",
   "repository": "https://github.com/MouseLightDataBrowser/swc-api.git",
