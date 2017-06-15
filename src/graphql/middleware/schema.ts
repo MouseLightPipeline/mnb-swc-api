@@ -3,7 +3,7 @@ import {makeExecutableSchema, addMockFunctionsToSchema} from "graphql-tools";
 import typeDefinitions from "../typeDefinitions";
 import resolvers from "../serverResolvers";
 import {GraphQLScalarType} from "graphql";
-import { Kind } from 'graphql/language';
+import { Kind } from "graphql/language";
 
 export interface IUploadFile {
     fieldname: string;
