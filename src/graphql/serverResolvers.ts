@@ -79,8 +79,8 @@ const resolvers = {
         tracing(_, args: IIdOnlyArguments, context: IGraphQLServerContext): Promise<ISwcTracing> {
             return context.getTracing(args.id);
         },
-        tracingNodes(_, __, context: IGraphQLServerContext): Promise<ISwcNode[]> {
-            return context.getTracingNodes();
+        tracingNodes(_, args: IIdOnlyArguments, context: IGraphQLServerContext): Promise<ISwcNode[]> {
+            return context.getTracingNodes(args.id);
         },
         tracingNode(_, args: IIdOnlyArguments, context: IGraphQLServerContext): Promise<ISwcNode> {
             return context.getTracingNode(args.id);
@@ -195,7 +195,10 @@ const resolvers = {
         },
         structureIdentifier(tracingNode, _, context: IGraphQLServerContext): Promise<IStructureIdentifier> {
             return context.getStructureForNode(tracingNode);
-        }
+        },
+        // structureIdValue(node: ISwcNode, _, context: IGraphQLServerContext): number {
+        //     return context.getStructureIdValue(node.structureIdentifierId);
+        // }
     },
     StructureIdentifier: {
         nodes(structureIdentifier, _, context: IGraphQLServerContext): Promise<ISwcNode[]> {

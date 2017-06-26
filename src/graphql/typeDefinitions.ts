@@ -130,6 +130,7 @@ type SwcNode {
     z: Float
     radius: Float
     structureIdentifier: StructureIdentifier
+    structureIdValue: Int
     tracing: SwcTracing
     createdAt: Float
     updatedAt: Float
@@ -195,7 +196,7 @@ type Query {
     neurons(sampleId: String): [Neuron!]!
     tracings(pageInput: SwcTracingPageInput): SwcTracingPage!
     tracing(id: String): SwcTracing!
-    tracingNodes: [SwcNode!]!
+    tracingNodes(id: String): [SwcNode!]!
     tracingNode(id: String): SwcNode!
     structureIdentifiers: [StructureIdentifier!]!
     structureIdentifier(id: String): StructureIdentifier!

@@ -58,6 +58,8 @@ export interface IGraphQLServerContext {
     attachedFiles;
 
     // Query
+    getStructureIdValue(id: string): number;
+
     getMouseStrains(): Promise<IMouseStrain[]>;
     getMouseStrain(id: string): Promise<IMouseStrain>;
 
@@ -86,7 +88,7 @@ export interface IGraphQLServerContext {
     getStructureForTracing(tracing: ISwcTracing): Promise<IStructureIdentifier>;
     getNodeCount(tracing: ISwcTracing): Promise<number>;
 
-    getTracingNodes(): Promise<ISwcNode[]>;
+    getTracingNodes(id: string): Promise<ISwcNode[]>;
     getTracingNode(id: string): Promise<ISwcNode>;
     getTracingForNode(node: ISwcNode): Promise<ISwcTracing>;
     getStructureForNode(node: ISwcNode): Promise<IStructureIdentifier>;
@@ -118,6 +120,10 @@ export class GraphQLServerContext implements IGraphQLServerContext {
 
     public get attachedFiles() {
         return this._attachedFiles;
+    }
+
+    public getStructureIdValue(id: string): number {
+        return this._storageManager.StructureIdentifiers.valueForId(id);
     }
 
     public async getSamples(): Promise<ISample[]> {
@@ -332,8 +338,20 @@ export class GraphQLServerContext implements IGraphQLServerContext {
         }
     }
 
-    public async getTracingNodes(): Promise<ISwcNode[]> {
-        return this._storageManager.SwcNodes.findAll({});
+    public async getTracingNodes(id: string): Promise<ISwcNode[]> {
+        let r = [];
+        if (!id) {
+            r = await this._storageManager.SwcNodes.findAll({});
+        } else {
+            r = await this._storageManager.SwcNodes.findAll({where: {swcTracingId: id}});
+        }
+
+        r = r.map(o => {
+            o.structureIdValue = this.getStructureIdValue(o.structureIdentifierId);
+            return o;
+        });
+
+        return r;
     }
 
     public async getTracingNode(id: string): Promise<ISwcNode> {

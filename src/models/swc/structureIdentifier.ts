@@ -41,18 +41,24 @@ export function sequelizeImport(sequelize, DataTypes) {
     });
 
     const valueIdMap = new Map<number, string>();
+    const idValueMap = new Map<string, number>();
 
     StructureIdentifier.buildIdValueMap = async () => {
         if (valueIdMap.size === 0) {
             const all = await StructureIdentifier.findAll({});
             all.forEach(s => {
                 valueIdMap.set(s.value, s.id);
+                idValueMap.set(s.id, s.value);
             });
         }
     };
 
     StructureIdentifier.idForValue = (val: number) => {
         return valueIdMap.get(val);
+    };
+
+    StructureIdentifier.valueForId = (id: string) => {
+        return idValueMap.get(id);
     };
 
     StructureIdentifier.structuresAreLoaded = () => {
