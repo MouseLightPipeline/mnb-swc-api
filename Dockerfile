@@ -2,7 +2,7 @@ FROM node:7.10
 
 WORKDIR /app
 
-RUN yarn global add typescript
+RUN yarn global add typescript@2.3.4
 
 COPY . .
 
