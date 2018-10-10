@@ -1,19 +1,23 @@
 import {transformClient} from "./transformGraphQLClient";
-const debug = require("debug")("ndb:swc-api:context");
+const debug = require("debug")("mnb:swc-api:context");
 
 import {IUploadFile} from "./middleware/schema";
 
 import {swcParse} from "../Swc";
 
-import {PersistentStorageManager} from "../models/databaseConnector";
 import {ISwcTracing, ISwcTracingInput} from "../models/swc/tracing";
 import {ISwcNode} from "../models/swc/tracingNode";
 import {IStructureIdentifier} from "../models/swc/structureIdentifier";
 import {ITracingStructure} from "../models/swc/tracingStructure";
-import {
-    IBrainArea, IFluorophore, IInjection, IInjectionVirus, IMouseStrain, INeuron, IRegistrationTransform,
-    ISample
-} from "ndb-data-models";
+import {ISample} from "../models/sample/sample";
+import {IMouseStrain} from "../models/sample/mouseStrain";
+import {IInjection} from "../models/sample/injection";
+import {IFluorophore} from "../models/sample/fluorophore";
+import {IInjectionVirus} from "../models/sample/injectionVirus";
+import {INeuron} from "../models/sample/neuron";
+import {IBrainArea} from "../models/sample/brainArea";
+import {ITransform} from "../models/sample/transform";
+import {PersistentStorageManager} from "../data-access/storageManager";
 
 export interface ISwcTracingPageInput {
     offset: number;
@@ -54,62 +58,7 @@ export interface IDeleteSwcTracingOutput {
     error: Error;
 }
 
-export interface IGraphQLServerContext {
-    attachedFiles;
-
-    // Query
-    getStructureIdValue(id: string): number;
-
-    getMouseStrains(): Promise<IMouseStrain[]>;
-    getMouseStrain(id: string): Promise<IMouseStrain>;
-
-    getInjections(): Promise<IInjection[]>;
-    getInjection(id: string): Promise<IInjection>;
-    getInjectionsForSample(sample: ISample): Promise<IInjection[]>;
-
-    getVirusForInjection(injection: IInjection): Promise<IInjectionVirus>;
-
-    getFluorophoreForInjection(injection: IInjection): Promise<IFluorophore>;
-
-    getBrainAreaForInjection(injection: IInjection): Promise<IBrainArea>;
-    getBrainAreaForNeuron(neuron: INeuron): Promise<IBrainArea>;
-
-    getRegistrationTransform(id: string): Promise<IRegistrationTransform>;
-
-    getSamples(): Promise<ISample[]>;
-    getSample(id: string): Promise<ISample>;
-
-    getNeuron(id: string): Promise<INeuron>;
-    getNeurons(sampleId: string): Promise<INeuron[]>;
-    getNeuronsForInjection(injection: IInjection): Promise<INeuron[]>;
-
-    getTracings(pageInput: ISwcTracingPageInput): Promise<ISwcTracingPage>;
-    getTracing(id: string): Promise<ISwcTracing>;
-    getStructureForTracing(tracing: ISwcTracing): Promise<IStructureIdentifier>;
-    getNodeCount(tracing: ISwcTracing): Promise<number>;
-
-    getTracingNodes(id: string): Promise<ISwcNode[]>;
-    getTracingNode(id: string): Promise<ISwcNode>;
-    getTracingForNode(node: ISwcNode): Promise<ISwcTracing>;
-    getStructureForNode(node: ISwcNode): Promise<IStructureIdentifier>;
-
-    getStructureIdentifiers(): Promise<IStructureIdentifier[]>;
-    getStructureIdentifier(id: string): Promise<IStructureIdentifier>;
-    getNodesForStructure(structure: IStructureIdentifier): Promise<ISwcNode[]>;
-
-    getTracingStructures(): Promise<ITracingStructure[]>;
-
-    // Mutation
-    transformedTracingsForSwc(id: String): Promise<IQueryTracingsForSwcOutput>
-    receiveSwcUpload(annotator: string, neuronId: string, structureIdentifierId: string): Promise<IUploadOutput>;
-    receiveSwcUpdate(id: string): Promise<IUploadOutput>;
-    updateTracing(tracingInput: ISwcTracingInput): Promise<IUpdateSwcTracingOutput>;
-    deleteTracing(id: string): Promise<IDeleteSwcTracingOutput>;
-    deleteTracings(ids: string[]): Promise<IDeleteSwcTracingOutput[]>;
-    deleteTracingsForNeurons(ids: string[]): Promise<IDeleteSwcTracingOutput[]>;
-}
-
-export class GraphQLServerContext implements IGraphQLServerContext {
+export class GraphQLServerContext {
     private _storageManager = PersistentStorageManager.Instance();
 
     private _attachedFiles: IUploadFile[];
@@ -188,7 +137,7 @@ export class GraphQLServerContext implements IGraphQLServerContext {
         return result ? result.getBrainArea() : [];
     }
 
-    public async getRegistrationTransform(id: string): Promise<IRegistrationTransform> {
+    public async getRegistrationTransform(id: string): Promise<ITransform> {
         return this._storageManager.RegistrationTransforms.findById(id);
     }
 

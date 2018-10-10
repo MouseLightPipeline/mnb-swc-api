@@ -1,15 +1,13 @@
-FROM node:7.10
+FROM node:8.12
 
 WORKDIR /app
 
-RUN yarn global add typescript@2.3.4
+COPY dist .
 
-COPY . .
+RUN yarn global add sequelize-cli
 
-RUN yarn install
+RUN yarn install --production=true
 
-RUN tsc
+CMD ["./docker-entry.sh"]
 
-CMD ["npm", "run", "debug"]
-
-EXPOSE  9651
+EXPOSE  5000

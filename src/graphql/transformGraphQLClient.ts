@@ -1,12 +1,12 @@
+import {TransformServiceOptions} from "../options/coreServicesOptions";
+
 const ApolloClient = require("apollo-client").ApolloClient;
 const createNetworkInterface = require("apollo-client").createNetworkInterface;
 const gql = require("graphql-tag");
 
 require("isomorphic-fetch");
 
-const debug = require("debug")("ndb:swc-api:transform-client");
-
-import {TransformServiceOptions} from "../options/serviceOptions";
+const debug = require("debug")("mnb:swc-api:transform-client");
 
 export class TransformApiClient {
     private _client: any;

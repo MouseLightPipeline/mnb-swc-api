@@ -3,6 +3,5 @@ node_modules
 *.js
 *.js.map
 
-secrets.config.ts
-
+dist
 uploads

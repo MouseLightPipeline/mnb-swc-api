@@ -1,7 +1,7 @@
 const fs = require("fs");
 const path = require("path");
 
-import {ISequelizeDatabase} from "./databaseConnector";
+import {ISequelizeDatabase} from "./storageManager";
 
 export async function loadModels<T>(db: ISequelizeDatabase<T>, modelLocation: string) {
     fs.readdirSync(modelLocation).filter(file => {
@@ -9,13 +9,13 @@ export async function loadModels<T>(db: ISequelizeDatabase<T>, modelLocation: st
     }).forEach(file => {
         let modelModule = require(path.join(modelLocation, file));
 
-        const model = db.connection.import(modelModule.TableName, modelModule.sequelizeImport);
-
-        db.models[model.name] = model;
+        if (modelModule.sequelizeImport !== undefined && modelModule.TableName !== undefined) {
+            db.models[modelModule.TableName] = db.connection.import(path.join(modelLocation, file), modelModule.sequelizeImport);
+        }
     });
 
     Object.keys(db.models).map(modelName => {
-        if (db.models[modelName].associate) {
+        if (db.models[modelName].associate !== undefined) {
             db.models[modelName].associate(db.models);
         }
     });
