@@ -25,7 +25,7 @@ export interface ISwcParseResult {
 
 const SOMA_STRUCTURE_IDENTIFIER_INDEX = 1;
 
-export async function swcParse(/*file: IUploadFile*/stream1: fs.ReadStream, encoding: string): Promise<any> {
+export async function swcParse(stream1: fs.ReadStream, encoding: string): Promise<any> {
     const stream = byline.createStream(stream1);
 
     let parseOutput: ISwcParseResult = {
@@ -44,7 +44,6 @@ export async function swcParse(/*file: IUploadFile*/stream1: fs.ReadStream, enco
             while ((line = stream.read()) !== null) {
                 onData(line.toString('utf8'), parseOutput);
             }
-            //onComplete(parseOutput, resolve);
         });
         stream.on("end", () => {
             onComplete(parseOutput, resolve);
@@ -111,8 +110,5 @@ function onData(line, parseOutput) {
 }
 
 function onComplete(parseOutput, resolve) {
-    // Remove temporary upload
-    // fs.unlinkSync(file.path);
-
     resolve(parseOutput);
 }

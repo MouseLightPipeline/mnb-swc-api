@@ -2,7 +2,7 @@
   "name": "mnb-swc-api",
   "version": "1.4.0",
   "private": true,
-  "main": "src/app.js",
+  "main": "dist/app.js",
   "repository": "https://github.com/MouseLightDataBrowser/mnb-swc-api.git",
   "author": "Patrick Edson <pedson@leapscientific.com>",
   "license": "",
@@ -24,7 +24,6 @@
     "express": "^4.16.3",
     "graphql": "^14.0.2",
     "isomorphic-fetch": "^2.2.1",
-    "lodash": "^4.17.11",
     "pg": "^7.5.0",
     "sequelize": "^4.39.0"
   },
