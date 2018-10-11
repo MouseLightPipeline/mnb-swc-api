@@ -1,6 +1,7 @@
 import * as byline from "byline";
 import * as fs from "fs";
-import {IUploadFile} from "./graphql/middleware/schema";
+
+import {IUploadFile} from "./graphql/serverContext";
 
 export interface ISwcRow {
     sampleNumber: number;
@@ -24,8 +25,8 @@ export interface ISwcParseResult {
 
 const SOMA_STRUCTURE_IDENTIFIER_INDEX = 1;
 
-export async function swcParse(file: IUploadFile): Promise<any> {
-    const stream = byline(fs.createReadStream(file.path, {encoding: "utf8"}));
+export async function swcParse(/*file: IUploadFile*/stream1: fs.ReadStream, encoding: string): Promise<any> {
+    const stream = byline.createStream(stream1);
 
     let parseOutput: ISwcParseResult = {
         somaCount: 0,
@@ -38,12 +39,15 @@ export async function swcParse(file: IUploadFile): Promise<any> {
     };
 
     return new Promise((resolve) => {
-        stream.on("data", line => {
-            onData(line, parseOutput)
+        stream.on("readable", () => {
+            let line: Buffer;
+            while ((line = stream.read()) !== null) {
+                onData(line.toString('utf8'), parseOutput);
+            }
+            //onComplete(parseOutput, resolve);
         });
-
         stream.on("end", () => {
-            onComplete(file, parseOutput, resolve);
+            onComplete(parseOutput, resolve);
         });
     });
 }
@@ -73,7 +77,7 @@ function onData(line, parseOutput) {
         } else {
             data = data.split(/\s/);
             if (data.length === 7) {
-                const sampleNumber =  parseInt(data[0]);
+                const sampleNumber = parseInt(data[0]);
                 const parentNumber = parseInt(data[6]);
 
                 if (isNaN(sampleNumber) || isNaN(parentNumber)) {
@@ -106,9 +110,9 @@ function onData(line, parseOutput) {
     }
 }
 
-function onComplete(file, parseOutput, resolve) {
+function onComplete(parseOutput, resolve) {
     // Remove temporary upload
-    fs.unlinkSync(file.path);
+    // fs.unlinkSync(file.path);
 
     resolve(parseOutput);
 }

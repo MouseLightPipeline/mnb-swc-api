@@ -1,4 +1,5 @@
-import {ISample} from "../models/sample/sample";
+import { GraphQLScalarType } from 'graphql';
+import { Kind } from 'graphql/language';
 
 const debug = require("debug")("mnb:swc-api:resolvers");
 
@@ -8,13 +9,14 @@ import {
     ISwcTracingPage,
     ISwcTracingPageInput,
     IUpdateSwcTracingOutput,
-    IUploadOutput
+    IUploadOutput, IUploadFile
 } from "./serverContext";
 
 import {ISwcTracing, ISwcTracingInput} from "../models/swc/tracing";
 import {ISwcNode} from "../models/swc/tracingNode";
 import {IStructureIdentifier} from "../models/swc/structureIdentifier";
 import {ITracingStructure} from "../models/swc/tracingStructure";
+import {ISample} from "../models/sample/sample";
 import {IMouseStrain} from "../models/sample/mouseStrain";
 import {INeuron} from "../models/sample/neuron";
 import {IInjection} from "../models/sample/injection";
@@ -46,12 +48,14 @@ interface ITracingsArguments {
 
 interface ITracingUpdateSwcArguments {
     id: string;
+    files: Promise<IUploadFile>[];
 }
 
 interface ITracingUploadArguments {
     annotator: string;
     neuronId: string;
     structureId: string;
+    files: Promise<IUploadFile>[];
 }
 
 interface IUpdateTracingArguments {
@@ -104,11 +108,11 @@ const resolvers = {
         }
     },
     Mutation: {
-        uploadSwc(_, args: ITracingUploadArguments, context: GraphQLServerContext): Promise<IUploadOutput> {
-            return context.receiveSwcUpload(args.annotator, args.neuronId, args.structureId);
+        async  uploadSwc(_, args: ITracingUploadArguments, context: GraphQLServerContext): Promise<IUploadOutput> {
+            return context.receiveSwcUpload(args.annotator, args.neuronId, args.structureId, args.files);
         },
-        updateSwc(_, args: ITracingUpdateSwcArguments, context: GraphQLServerContext): Promise<IUploadOutput> {
-            return context.receiveSwcUpdate(args.id);
+        async updateSwc(_, args: ITracingUpdateSwcArguments, context: GraphQLServerContext): Promise<IUploadOutput> {
+            return context.receiveSwcUpdate(args.id, args.files);
         },
         transformedTracingsForSwc(_, args: IIdOnlyArguments, context: GraphQLServerContext): Promise<IQueryTracingsForSwcOutput> {
             return context.transformedTracingsForSwc(args.id);
@@ -209,8 +213,54 @@ const resolvers = {
         nodes(structureIdentifier, _, context: GraphQLServerContext): Promise<ISwcNode[]> {
             return context.getNodesForStructure(structureIdentifier);
         }
-    }
+    },
+    Date: new GraphQLScalarType({
+        name: 'Date',
+        description: 'Date custom scalar type',
+        parseValue: (value) => {
+            return new Date(value); // value from the client
+        },
+        serialize: (value) => {
+            return value.getTime(); // value sent to the client
+        },
+        parseLiteral: (ast) => {
+            if (ast.kind === Kind.INT) {
+                return parseInt(ast.value, 10); // ast value is always in string format
+            }
+            return null;
+        },
+    }),
+    UploadedFile: new GraphQLScalarType({
+        name: 'UploadedFile',
+        description: 'Uploaded file',
+        parseValue: value => value,
+        serialize: value => value,
+        parseLiteral: parseJSONLiteral
+    })
 };
+
+function parseJSONLiteral(ast) {
+    switch (ast.kind) {
+        case Kind.STRING:
+        case Kind.BOOLEAN:
+            return ast.value;
+        case Kind.INT:
+        case Kind.FLOAT:
+            return parseFloat(ast.value);
+        case Kind.OBJECT: {
+            const value = Object.create(null);
+            ast.fields.forEach(field => {
+                value[field.name.value] = parseJSONLiteral(field.value);
+            });
+
+            return value;
+        }
+        case Kind.LIST:
+            return ast.values.map(parseJSONLiteral);
+        default:
+            return null;
+    }
+}
 
 let systemMessage: String = "";
 

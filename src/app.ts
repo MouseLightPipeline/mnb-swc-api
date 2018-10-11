@@ -1,24 +1,18 @@
 import * as express from "express";
 import * as os from "os";
-import * as bodyParser from "body-parser";
-import * as multer from "multer";
+import {ApolloServer} from "apollo-server-express";
 
 const debug = require("debug")("mnb:swc-api:server");
 
 import {ServiceOptions} from "./options/serviceOptions";
-
-import {graphQLMiddleware, graphiQLMiddleware} from "./graphql/middleware/graphQLMiddleware";
+import typeDefinitions from "./graphql/typeDefinitions";
+import resolvers from "./graphql/serverResolvers";
+import {GraphQLServerContext} from "./graphql/serverContext";
 
 const app = express();
 
-app.use(bodyParser.urlencoded({extended: true}));
+const server = new ApolloServer({typeDefs: typeDefinitions, resolvers, context: () => new GraphQLServerContext()});
 
-app.use(bodyParser.json());
-
-app.use(multer({dest: "uploads"}).any());
-
-app.use(ServiceOptions.graphQLEndpoint, graphQLMiddleware());
-
-app.use(["/", ServiceOptions.graphQLEndpoint], graphiQLMiddleware(ServiceOptions));
+server.applyMiddleware({app, path: ServiceOptions.graphQLEndpoint});
 
 app.listen(ServiceOptions.port, () => debug(`swc api server is now running on http://${os.hostname()}:${ServiceOptions.port}`));

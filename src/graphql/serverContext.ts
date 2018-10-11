@@ -1,7 +1,7 @@
-import {transformClient} from "./transformGraphQLClient";
-const debug = require("debug")("mnb:swc-api:context");
+import {transformClient} from "../external/transformApiClient";
+import {Op} from "sequelize";
 
-import {IUploadFile} from "./middleware/schema";
+const debug = require("debug")("mnb:swc-api:context");
 
 import {swcParse} from "../Swc";
 
@@ -18,6 +18,13 @@ import {INeuron} from "../models/sample/neuron";
 import {IBrainArea} from "../models/sample/brainArea";
 import {ITransform} from "../models/sample/transform";
 import {PersistentStorageManager} from "../data-access/storageManager";
+
+export interface IUploadFile {
+    filename: string;
+    encoding: string;
+    mimetype: string;
+    stream: any;
+}
 
 export interface ISwcTracingPageInput {
     offset: number;
@@ -60,16 +67,6 @@ export interface IDeleteSwcTracingOutput {
 
 export class GraphQLServerContext {
     private _storageManager = PersistentStorageManager.Instance();
-
-    private _attachedFiles: IUploadFile[];
-
-    public constructor(files = []) {
-        this._attachedFiles = files;
-    }
-
-    public get attachedFiles() {
-        return this._attachedFiles;
-    }
 
     public getStructureIdValue(id: string): number {
         return this._storageManager.StructureIdentifiers.valueForId(id);
@@ -153,7 +150,7 @@ export class GraphQLServerContext {
         const injectionIds = (await this._storageManager.Injections.findAll({where: {sampleId: sampleId}})).map(obj => obj.id);
 
         return this._storageManager.Neurons.findAll({
-            where: {injectionId: {$in: injectionIds}},
+            where: {injectionId: {[Op.in]: injectionIds}},
             order: [["idString", "ASC"]]
         });
     }
@@ -187,7 +184,7 @@ export class GraphQLServerContext {
             }
 
             if (queryInput.neuronIds && queryInput.neuronIds.length > 0) {
-                options.where["neuronId"] = {$in: queryInput.neuronIds}
+                options.where["neuronId"] = {[Op.in]: queryInput.neuronIds}
             }
 
             out.matchCount = await this._storageManager.SwcTracings.count(options);
@@ -331,8 +328,8 @@ export class GraphQLServerContext {
         return result ? result.getNodes() : [];
     }
 
-    public async receiveSwcUpload(annotator: string, neuronId: string, tracingStructureId: string): Promise<IUploadOutput> {
-        if (!this.attachedFiles || this.attachedFiles.length === 0) {
+    public async receiveSwcUpload(annotator: string, neuronId: string, tracingStructureId: string, files: Promise<IUploadFile>[]): Promise<IUploadOutput> {
+        if (!files || files.length === 0) {
             return {
                 tracing: null,
                 transformSubmission: false,
@@ -340,7 +337,7 @@ export class GraphQLServerContext {
             };
         }
 
-        if (!this.attachedFiles || this.attachedFiles.length > 1) {
+        if (files.length > 1) {
             return {
                 tracing: null,
                 transformSubmission: false,
@@ -348,15 +345,14 @@ export class GraphQLServerContext {
             };
         }
 
-        let file = this.attachedFiles[0];
+        let file = await files[0];
 
         let tracing: ISwcTracing = null;
 
         let transformSubmission = false;
 
         try {
-
-            const parseOutput = await swcParse(file);
+            const parseOutput = await swcParse(file.stream, file.encoding);
 
             if (parseOutput.rows.length === 0) {
                 return {
@@ -389,7 +385,7 @@ export class GraphQLServerContext {
                 annotator,
                 neuronId,
                 tracingStructureId,
-                filename: file.originalname,
+                //// filename: file.originalname,
                 comments: parseOutput.comments,
                 offsetX: parseOutput.janeliaOffsetX,
                 offsetY: parseOutput.janeliaOffsetY,
@@ -420,7 +416,7 @@ export class GraphQLServerContext {
                 return this._storageManager.SwcNodes.bulkCreate(nodes, {transaction: t});
             });
 
-            debug(`inserted ${nodes.length} nodes from ${file.originalname}`);
+            //// debug(`inserted ${nodes.length} nodes from ${file.originalname}`);
 
             try {
                 const out = await transformClient.transformTracing(tracing.id);
@@ -438,8 +434,8 @@ export class GraphQLServerContext {
         return {tracing, transformSubmission, error: null};
     }
 
-    public async receiveSwcUpdate(id: string): Promise<IUploadOutput> {
-        if (!this.attachedFiles || this.attachedFiles.length === 0) {
+    public async receiveSwcUpdate(id: string, files: Promise<IUploadFile>[]): Promise<IUploadOutput> {
+        if (!files || files.length === 0) {
             return {
                 tracing: null,
                 transformSubmission: false,
@@ -447,7 +443,7 @@ export class GraphQLServerContext {
             };
         }
 
-        if (!this.attachedFiles || this.attachedFiles.length > 1) {
+        if (files.length > 1) {
             return {
                 tracing: null,
                 transformSubmission: false,
@@ -455,7 +451,7 @@ export class GraphQLServerContext {
             };
         }
 
-        let file = this.attachedFiles[0];
+        let file = await files[0];
 
         let tracing: ISwcTracing = await this._storageManager.SwcTracings.findById(id);
 
@@ -463,7 +459,7 @@ export class GraphQLServerContext {
 
         try {
 
-            const parseOutput = await swcParse(file);
+            const parseOutput = await swcParse(file.stream, file.encoding);
 
             if (parseOutput.rows.length === 0) {
                 return {
@@ -507,7 +503,8 @@ export class GraphQLServerContext {
 
             await this._storageManager.SwcConnection.transaction(async (t) => {
                 await this._storageManager.SwcTracings.update({
-                    id: tracing.id, filename: file.originalname,
+                    id: tracing.id,
+                    //// filename: file.originalname,
                     comments: parseOutput.comments,
                     offsetX: parseOutput.janeliaOffsetX,
                     offsetY: parseOutput.janeliaOffsetY,
@@ -519,7 +516,7 @@ export class GraphQLServerContext {
                 return this._storageManager.SwcNodes.bulkCreate(nodes, {transaction: t});
             });
 
-            debug(`inserted ${nodes.length} nodes from ${file.originalname}`);
+            //// debug(`inserted ${nodes.length} nodes from ${file.originalname}`);
 
             try {
                 const out = await transformClient.transformTracing(tracing.id);
@@ -640,7 +637,7 @@ export class GraphQLServerContext {
     }
 
     public async deleteTracingsForNeurons(ids: string[]): Promise<IDeleteSwcTracingOutput[]> {
-        const tracingIds = await this._storageManager.SwcTracings.findAll({where: {neuronId: {$in: ids}}}).map(o => o.id);
+        const tracingIds = await this._storageManager.SwcTracings.findAll({where: {neuronId: {[Op.in]: ids}}}).map(o => o.id);
 
         return this.deleteTracings(tracingIds);
     }

@@ -1,24 +1,25 @@
-import {TransformServiceOptions} from "../options/coreServicesOptions";
-
-const ApolloClient = require("apollo-client").ApolloClient;
-const createNetworkInterface = require("apollo-client").createNetworkInterface;
-const gql = require("graphql-tag");
+import { HttpLink } from 'apollo-link-http';
+import { ApolloClient } from 'apollo-client';
+import { InMemoryCache } from 'apollo-cache-inmemory';
+import gql from "graphql-tag";
 
 require("isomorphic-fetch");
 
 const debug = require("debug")("mnb:swc-api:transform-client");
 
+import {TransformServiceOptions} from "../options/coreServicesOptions";
+
 export class TransformApiClient {
     private _client: any;
 
     constructor() {
-        const url = `http://${TransformServiceOptions.host}:${TransformServiceOptions.port}/graphql`;
+        const url = `http://${TransformServiceOptions.host}:${TransformServiceOptions.port}/${TransformServiceOptions.graphQLEndpoint}`;
 
         debug(`creating apollo client for transform service ${url}`);
-        const networkInterface = createNetworkInterface({uri: url});
 
         this._client = new ApolloClient({
-            networkInterface: networkInterface,
+            link: new HttpLink({uri: url}),
+            cache: new InMemoryCache()
         });
     }
 

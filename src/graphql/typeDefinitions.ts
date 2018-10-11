@@ -1,4 +1,8 @@
-let typeDefinitions = `
+import {gql} from "apollo-server-express";
+
+let typeDefinitions = gql`
+scalar Date
+
 scalar UploadedFile
 
 type Sample {
@@ -7,12 +11,12 @@ type Sample {
     animalId: String
     tag: String
     comment: String
-    sampleDate: Float
+    sampleDate: Date
     mouseStrain: MouseStrain
     injections: [Injection!]!
     activeRegistrationTransform: RegistrationTransform
-    createdAt: Float
-    updatedAt: Float
+    createdAt: Date
+    updatedAt: Date
 }
 
 type Neuron {
@@ -26,8 +30,8 @@ type Neuron {
     z: Float
     brainArea: BrainArea
     injection: Injection
-    createdAt: Float
-    updatedAt: Float
+    createdAt: Date
+    updatedAt: Date
 }
 
 type Injection {
@@ -37,32 +41,32 @@ type Injection {
     injectionVirus: InjectionVirus
     fluorophore: Fluorophore
     neurons: [Neuron]
-    createdAt: Float
-    updatedAt: Float
+    createdAt: Date
+    updatedAt: Date
 }
 
 type InjectionVirus {
     id: String
     name: String
     injections: [Injection]
-    createdAt: Float
-    updatedAt: Float
+    createdAt: Date
+    updatedAt: Date
 }
 
 type Fluorophore  {
     id: String
     name: String
     injections: [Injection]
-    createdAt: Float
-    updatedAt: Float
+    createdAt: Date
+    updatedAt: Date
 }
 
 type MouseStrain {
     id: String
     name: String
     samples: [Sample]
-    createdAt: Float
-    updatedAt: Float
+    createdAt: Date
+    updatedAt: Date
 }
 
 type RegistrationTransform {
@@ -82,10 +86,11 @@ type BrainArea {
     name: String
     safeName: String
     acronym: String
+    aliases: [String]
     injections: [Injection]
     neurons: [Neuron]
-    createdAt: Float
-    updatedAt: Float
+    createdAt: Date
+    updatedAt: Date
 }
 
 type StructureIdentifier {
@@ -94,16 +99,16 @@ type StructureIdentifier {
     value: Int
     mutable: Boolean
     nodes: [SwcNode]
-    createdAt: Float
-    updatedAt: Float
+    createdAt: Date
+    updatedAt: Date
 }
 
 type TracingStructure {
     id: String!
     name: String
     value: Int
-    createdAt: Float
-    updatedAt: Float
+    createdAt: Date
+    updatedAt: Date
 }
 
 type SwcTracing {
@@ -117,8 +122,8 @@ type SwcTracing {
     nodeCount: Int
     tracingStructure: TracingStructure
     neuron: Neuron
-    createdAt: Float
-    updatedAt: Float
+    createdAt: Date
+    updatedAt: Date
 }
 
 type SwcNode {
@@ -132,8 +137,8 @@ type SwcNode {
     structureIdentifier: StructureIdentifier
     structureIdValue: Int
     tracing: SwcTracing
-    createdAt: Float
-    updatedAt: Float
+    createdAt: Date
+    updatedAt: Date
 }
 
 type SwcTracingPage {
