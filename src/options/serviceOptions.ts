@@ -1,7 +1,6 @@
 const configuration = {
     port: 5000,
-    graphQLEndpoint: "/graphql",
-    graphiQLEndpoint: "/graphiql"
+    graphQLEndpoint: "/graphql"
 };
 
 function loadConfiguration() {
