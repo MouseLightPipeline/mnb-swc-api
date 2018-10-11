@@ -28,17 +28,17 @@ export function sequelizeImport(sequelize, DataTypes) {
         value: DataTypes.INTEGER,
         mutable: {type: DataTypes.BOOLEAN, defaultValue: true}
     }, {
-        classMethods: {
-            associate: models => {
-                StructureIdentifier.hasMany(models.SwcTracingNode, {foreignKey: "structureIdentifierId", as: "Nodes"});
-            },
-            prepareContents: () => {
-                StructureIdentifier.buildIdValueMap();
-            }
-        },
         timestamps: true,
         paranoid: true
     });
+
+    StructureIdentifier.associate = (models) => {
+        StructureIdentifier.hasMany(models.SwcTracingNode, {foreignKey: "structureIdentifierId", as: "Nodes"});
+    };
+
+    StructureIdentifier.prepareContents = () => {
+        StructureIdentifier.buildIdValueMap();
+    };
 
     const valueIdMap = new Map<number, string>();
     const idValueMap = new Map<string, number>();

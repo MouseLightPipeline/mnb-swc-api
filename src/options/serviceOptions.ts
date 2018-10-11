@@ -1,5 +1,5 @@
 const configuration = {
-    port: 9651,
+    port: 5000,
     graphQLEndpoint: "/graphql",
     graphiQLEndpoint: "/graphiql"
 };

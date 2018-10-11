@@ -26,15 +26,14 @@ export function sequelizeImport(sequelize, DataTypes) {
         radius: DataTypes.DOUBLE,
         parentNumber: DataTypes.INTEGER
     }, {
-        classMethods: {
-            associate: models => {
-                TracingNode.belongsTo(models.StructureIdentifier, {foreignKey: "structureIdentifierId"});
-                TracingNode.belongsTo(models.SwcTracing, {foreignKey: "swcTracingId"});
-            }
-        },
         timestamps: true,
         paranoid: false
     });
+
+    TracingNode.associate = models => {
+        TracingNode.belongsTo(models.StructureIdentifier, {foreignKey: "structureIdentifierId"});
+        TracingNode.belongsTo(models.SwcTracing, {foreignKey: "swcTracingId"});
+    };
 
     return TracingNode;
 }

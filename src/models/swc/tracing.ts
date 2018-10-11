@@ -61,15 +61,14 @@ export function sequelizeImport(sequelize, DataTypes) {
             defaultValue: 0
         }
     }, {
-        classMethods: {
-            associate: models => {
-                Tracing.hasMany(models.SwcTracingNode, {foreignKey: "swcTracingId", as: "Nodes"});
-                Tracing.belongsTo(models.TracingStructure, {foreignKey: "tracingStructureId"});
-            }
-        },
         timestamps: true,
         paranoid: false
     });
+
+    Tracing.associate = models => {
+        Tracing.hasMany(models.SwcTracingNode, {foreignKey: "swcTracingId", as: "Nodes"});
+        Tracing.belongsTo(models.TracingStructure, {foreignKey: "tracingStructureId"});
+    };
 
     return Tracing;
 }

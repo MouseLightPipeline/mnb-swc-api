@@ -120,7 +120,6 @@ export class PersistentStorageManager {
         await queryInterface.bulkInsert("StructureIdentifiers", loadStructureIdentifiers(when), {});
         await queryInterface.bulkInsert("TracingStructures", loadTracingStructures(when), {});
     }
-
 }
 
 async function authenticate(database, name) {

@@ -34,7 +34,7 @@ function createShellTasks(sourceFile: string) {
     const compileTypescript = `tsc -p tsconfig.prod.json`;
 
     const moveFiles = `cp ./{package.json,yarn.lock,LICENSE,.sequelizerc,docker-entry.sh,migrate.sh} dist`;
-    const moveDirectories = `cp -R migrations fixtures dist/`;
+    const moveDirectories = `cp -R migrations dist/`;
 
     const contents = fs.readFileSync(sourceFile).toString();
 
