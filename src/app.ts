@@ -5,7 +5,7 @@ import {ApolloServer} from "apollo-server-express";
 const debug = require("debug")("mnb:swc-api:server");
 
 import {ServiceOptions} from "./options/serviceOptions";
-import typeDefinitions from "./graphql/typeDefinitions";
+import {typeDefinitions} from "./graphql/typeDefinitions";
 import resolvers from "./graphql/serverResolvers";
 import {GraphQLServerContext} from "./graphql/serverContext";
 

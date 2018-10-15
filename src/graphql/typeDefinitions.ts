@@ -1,6 +1,6 @@
 import {gql} from "apollo-server-express";
 
-let typeDefinitions = gql`
+export const typeDefinitions = gql`
 scalar Date
 
 type Sample {
@@ -230,5 +230,3 @@ schema {
     query: Query
     mutation: Mutation
 }`;
-
-export default typeDefinitions;
