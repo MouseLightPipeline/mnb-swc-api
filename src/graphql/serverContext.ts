@@ -6,7 +6,7 @@ const debug = require("debug")("mnb:swc-api:context");
 import {swcParse} from "../Swc";
 
 import {ISwcTracing, ISwcTracingInput} from "../models/swc/tracing";
-import {ISwcNode} from "../models/swc/tracingNode";
+import {ISwcNode, ISwcNodeAttributes} from "../models/swc/tracingNode";
 import {IStructureIdentifier} from "../models/swc/structureIdentifier";
 import {ITracingStructure} from "../models/swc/tracingStructure";
 import {ISample} from "../models/sample/sample";
@@ -29,11 +29,8 @@ export interface IUploadFile {
 export interface ISwcTracingPageInput {
     offset: number;
     limit: number;
-    sampleId: string;
     neuronIds: string[];
     tracingStructureId: string;
-    annotator: string;
-    filename: string;
 }
 
 export interface ISwcTracingPage {
@@ -231,7 +228,7 @@ export class GraphQLServerContext {
     }
 
     // TODO Unused - for reference
-    public async getNodesForTracing(tracing: ISwcTracing, first: number, count: number): Promise<ISwcNode[]> {
+    public async getNodesForTracing(tracing: ISwcTracing, first: number, count: number): Promise<ISwcNodeAttributes[]> {
         let offset = 0;
         let limit = 10;
 
@@ -284,7 +281,7 @@ export class GraphQLServerContext {
         }
     }
 
-    public async getTracingNodes(id: string): Promise<ISwcNode[]> {
+    public async getTracingNodes(id: string): Promise<ISwcNodeAttributes[]> {
         let r = [];
         if (!id) {
             r = await this._storageManager.SwcNodes.findAll({});
@@ -300,18 +297,18 @@ export class GraphQLServerContext {
         return r;
     }
 
-    public async getTracingNode(id: string): Promise<ISwcNode> {
+    public async getTracingNode(id: string): Promise<ISwcNodeAttributes> {
         return this._storageManager.SwcNodes.findById(id);
     }
 
-    public async getTracingForNode(node: ISwcNode): Promise<ISwcTracing> {
+    public async getTracingForNode(node: ISwcNodeAttributes): Promise<ISwcTracing> {
         return this.getTracing(node.swcTracingId)
     }
 
-    public async getStructureForNode(node: ISwcNode): Promise<IStructureIdentifier> {
-        const result = await this._storageManager.SwcNodes.findById(node.id);
+    public async getStructureForNode(node: ISwcNodeAttributes): Promise<IStructureIdentifier> {
+        const result: ISwcNode = await this._storageManager.SwcNodes.findById(node.id);
 
-        return result ? result.getStructureIdentifier() : [];
+        return result ? (await result.getStructureIdentifier()) : null;
     }
 
     public async getStructureIdentifiers(): Promise<IStructureIdentifier[]> {
@@ -322,14 +319,14 @@ export class GraphQLServerContext {
         return this._storageManager.StructureIdentifiers.findById(id);
     }
 
-    public async getNodesForStructure(structure: IStructureIdentifier): Promise<ISwcNode[]> {
+    public async getNodesForStructure(structure: IStructureIdentifier): Promise<ISwcNodeAttributes[]> {
         const result = await this._storageManager.StructureIdentifiers.findById(structure.id);
 
         return result ? result.getNodes() : [];
     }
 
-    public async receiveSwcUpload(annotator: string, neuronId: string, tracingStructureId: string, files: Promise<IUploadFile>[]): Promise<IUploadOutput> {
-        if (!files || files.length === 0) {
+    public async receiveSwcUpload(annotator: string, neuronId: string, tracingStructureId: string, uploadFile: Promise<IUploadFile>): Promise<IUploadOutput> {
+        if (!uploadFile) {
             return {
                 tracing: null,
                 transformSubmission: false,
@@ -337,15 +334,7 @@ export class GraphQLServerContext {
             };
         }
 
-        if (files.length > 1) {
-            return {
-                tracing: null,
-                transformSubmission: false,
-                error: {name: "UploadSwcError", message: "There are too many files attached to parse"}
-            };
-        }
-
-        let file = await files[0];
+        let file = await uploadFile;
 
         let tracing: ISwcTracing = null;
 
@@ -385,14 +374,14 @@ export class GraphQLServerContext {
                 annotator,
                 neuronId,
                 tracingStructureId,
-                //// filename: file.originalname,
+                filename: file.filename,
                 comments: parseOutput.comments,
                 offsetX: parseOutput.janeliaOffsetX,
                 offsetY: parseOutput.janeliaOffsetY,
                 offsetZ: parseOutput.janeliaOffsetZ
             };
 
-            let nodes: ISwcNode[] = parseOutput.rows.map(row => {
+            let nodes: ISwcNodeAttributes[] = parseOutput.rows.map(row => {
                 return {
                     swcTracingId: "",
                     sampleNumber: row.sampleNumber,
@@ -408,7 +397,7 @@ export class GraphQLServerContext {
             await this._storageManager.SwcConnection.transaction(async (t) => {
                 tracing = await this._storageManager.SwcTracings.create(tracingData, {transaction: t});
 
-                nodes = nodes.map<ISwcNode>(node => {
+                nodes = nodes.map<ISwcNodeAttributes>(node => {
                     node.swcTracingId = tracing.id;
                     return node;
                 });
@@ -416,107 +405,7 @@ export class GraphQLServerContext {
                 return this._storageManager.SwcNodes.bulkCreate(nodes, {transaction: t});
             });
 
-            //// debug(`inserted ${nodes.length} nodes from ${file.originalname}`);
-
-            try {
-                const out = await transformClient.transformTracing(tracing.id);
-                transformSubmission = true;
-                debug(`successfully submitted tracing for registration transform: ${out.data.applyTransform.tracing.id}`)
-            } catch (error) {
-                debug("transform submission failed");
-                debug(error);
-            }
-
-        } catch (error) {
-            return {tracing: null, transformSubmission: false, error};
-        }
-
-        return {tracing, transformSubmission, error: null};
-    }
-
-    public async receiveSwcUpdate(id: string, files: Promise<IUploadFile>[]): Promise<IUploadOutput> {
-        if (!files || files.length === 0) {
-            return {
-                tracing: null,
-                transformSubmission: false,
-                error: {name: "UploadSwcError", message: "There are no files attached to parse"}
-            };
-        }
-
-        if (files.length > 1) {
-            return {
-                tracing: null,
-                transformSubmission: false,
-                error: {name: "UploadSwcError", message: "There are too many files attached to parse"}
-            };
-        }
-
-        let file = await files[0];
-
-        let tracing: ISwcTracing = await this._storageManager.SwcTracings.findById(id);
-
-        let transformSubmission = false;
-
-        try {
-
-            const parseOutput = await swcParse(file.stream, file.encoding);
-
-            if (parseOutput.rows.length === 0) {
-                return {
-                    tracing: null,
-                    transformSubmission: false,
-                    error: {name: "UploadSwcError", message: "Could not find any identifiable node rows"}
-                };
-            }
-
-            if (parseOutput.somaCount === 0) {
-                return {
-                    tracing: null,
-                    transformSubmission: false,
-                    error: {name: "UploadSwcError", message: "There are no soma/root/un-parented nodes in the tracing"}
-                };
-            }
-
-            if (parseOutput.somaCount > 1) {
-                return {
-                    tracing: null,
-                    transformSubmission: false,
-                    error: {
-                        name: "UploadSwcError",
-                        message: "There is more than one soma/root/un-parented nodes in the tracing"
-                    }
-                };
-            }
-
-            let nodes: ISwcNode[] = parseOutput.rows.map(row => {
-                return {
-                    swcTracingId: id,
-                    sampleNumber: row.sampleNumber,
-                    structureIdentifierId: this._storageManager.StructureIdentifiers.idForValue(row.structure),
-                    x: row.x,
-                    y: row.y,
-                    z: row.z,
-                    radius: row.radius,
-                    parentNumber: row.parentNumber
-                }
-            });
-
-            await this._storageManager.SwcConnection.transaction(async (t) => {
-                await this._storageManager.SwcTracings.update({
-                    id: tracing.id,
-                    //// filename: file.originalname,
-                    comments: parseOutput.comments,
-                    offsetX: parseOutput.janeliaOffsetX,
-                    offsetY: parseOutput.janeliaOffsetY,
-                    offsetZ: parseOutput.janeliaOffsetZ
-                }, {where: {id: tracing.id}, transaction: t});
-
-                await this._storageManager.SwcNodes.destroy({where: {swcTracingId: id}, transaction: t});
-
-                return this._storageManager.SwcNodes.bulkCreate(nodes, {transaction: t});
-            });
-
-            //// debug(`inserted ${nodes.length} nodes from ${file.originalname}`);
+            debug(`inserted ${nodes.length} nodes from ${file.filename}`);
 
             try {
                 const out = await transformClient.transformTracing(tracing.id);
@@ -555,7 +444,7 @@ export class GraphQLServerContext {
         }
     }
 
-    public async transformedTracingsForSwc(id: String): Promise<IQueryTracingsForSwcOutput> {
+    public async transformedTracingCount(id: String): Promise<IQueryTracingsForSwcOutput> {
         let tracing = await this._storageManager.SwcTracings.findById(id);
 
         if (!tracing) {

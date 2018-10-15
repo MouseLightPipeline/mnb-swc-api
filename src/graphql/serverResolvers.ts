@@ -13,7 +13,7 @@ import {
 } from "./serverContext";
 
 import {ISwcTracing, ISwcTracingInput} from "../models/swc/tracing";
-import {ISwcNode} from "../models/swc/tracingNode";
+import {ISwcNodeAttributes} from "../models/swc/tracingNode";
 import {IStructureIdentifier} from "../models/swc/structureIdentifier";
 import {ITracingStructure} from "../models/swc/tracingStructure";
 import {ISample} from "../models/sample/sample";
@@ -45,17 +45,11 @@ interface ITracingsArguments {
     pageInput: ISwcTracingPageInput;
 }
 
-
-interface ITracingUpdateSwcArguments {
-    id: string;
-    files: Promise<IUploadFile>[];
-}
-
 interface ITracingUploadArguments {
     annotator: string;
     neuronId: string;
     structureId: string;
-    files: Promise<IUploadFile>[];
+    file: Promise<IUploadFile>;
 }
 
 interface IUpdateTracingArguments {
@@ -88,10 +82,10 @@ const resolvers = {
         tracing(_, args: IIdOnlyArguments, context: GraphQLServerContext): Promise<ISwcTracing> {
             return context.getTracing(args.id);
         },
-        tracingNodes(_, args: IIdOnlyArguments, context: GraphQLServerContext): Promise<ISwcNode[]> {
+        tracingNodes(_, args: IIdOnlyArguments, context: GraphQLServerContext): Promise<ISwcNodeAttributes[]> {
             return context.getTracingNodes(args.id);
         },
-        tracingNode(_, args: IIdOnlyArguments, context: GraphQLServerContext): Promise<ISwcNode> {
+        tracingNode(_, args: IIdOnlyArguments, context: GraphQLServerContext): Promise<ISwcNodeAttributes> {
             return context.getTracingNode(args.id);
         },
         structureIdentifiers(_, __, context: GraphQLServerContext): Promise<IStructureIdentifier[]> {
@@ -103,19 +97,16 @@ const resolvers = {
         tracingStructures(_, __, context: GraphQLServerContext): Promise<ITracingStructure[]> {
             return context.getTracingStructures();
         },
+        transformedTracingCount(_, args: IIdOnlyArguments, context: GraphQLServerContext): Promise<IQueryTracingsForSwcOutput> {
+            return context.transformedTracingCount(args.id);
+        },
         systemMessage(): String {
             return systemMessage;
         }
     },
     Mutation: {
         async  uploadSwc(_, args: ITracingUploadArguments, context: GraphQLServerContext): Promise<IUploadOutput> {
-            return context.receiveSwcUpload(args.annotator, args.neuronId, args.structureId, args.files);
-        },
-        async updateSwc(_, args: ITracingUpdateSwcArguments, context: GraphQLServerContext): Promise<IUploadOutput> {
-            return context.receiveSwcUpdate(args.id, args.files);
-        },
-        transformedTracingsForSwc(_, args: IIdOnlyArguments, context: GraphQLServerContext): Promise<IQueryTracingsForSwcOutput> {
-            return context.transformedTracingsForSwc(args.id);
+            return context.receiveSwcUpload(args.annotator, args.neuronId, args.structureId, args.file);
         },
 
         updateTracing(_, args: IUpdateTracingArguments, context: GraphQLServerContext): Promise<IUpdateSwcTracingOutput> {
@@ -204,13 +195,10 @@ const resolvers = {
         },
         structureIdentifier(tracingNode, _, context: GraphQLServerContext): Promise<IStructureIdentifier> {
             return context.getStructureForNode(tracingNode);
-        },
-        // structureIdValue(node: ISwcNode, _, context: GraphQLServerContext): number {
-        //     return context.getStructureIdValue(node.structureIdentifierId);
-        // }
+        }
     },
     StructureIdentifier: {
-        nodes(structureIdentifier, _, context: GraphQLServerContext): Promise<ISwcNode[]> {
+        nodes(structureIdentifier, _, context: GraphQLServerContext): Promise<ISwcNodeAttributes[]> {
             return context.getNodesForStructure(structureIdentifier);
         }
     },
@@ -229,38 +217,8 @@ const resolvers = {
             }
             return null;
         },
-    }),
-    UploadedFile: new GraphQLScalarType({
-        name: 'UploadedFile',
-        description: 'Uploaded file',
-        parseValue: value => value,
-        serialize: value => value,
-        parseLiteral: parseJSONLiteral
     })
 };
-
-function parseJSONLiteral(ast) {
-    switch (ast.kind) {
-        case Kind.STRING:
-        case Kind.BOOLEAN:
-            return ast.value;
-        case Kind.INT:
-        case Kind.FLOAT:
-            return parseFloat(ast.value);
-        case Kind.OBJECT: {
-            const value = Object.create(null);
-            ast.fields.forEach(field => {
-                value[field.name.value] = parseJSONLiteral(field.value);
-            });
-
-            return value;
-        }
-        case Kind.LIST:
-            return ast.values.map(parseJSONLiteral);
-        default:
-            return null;
-    }
-}
 
 let systemMessage: String = "";
 

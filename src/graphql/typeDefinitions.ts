@@ -3,8 +3,6 @@ import {gql} from "apollo-server-express";
 let typeDefinitions = gql`
 scalar Date
 
-scalar UploadedFile
-
 type Sample {
     id: String
     idNumber: Int
@@ -185,50 +183,52 @@ input SwcTracingInput {
 input SwcTracingPageInput {
     offset: Int
     limit: Int
-    sampleId: String
     neuronIds: [String!]
     tracingStructureId: String
-    annotator: String
-    filename: String
 }
 
 type Query {
     samples: [Sample!]!
     sample(id: String): Sample
-    mouseStrains: [MouseStrain!]!
+    
+    mouseStrains: [MouseStrain!]!    
     mouseStrain(id: String): MouseStrain
+    
     injections: [Injection!]!
+    
     neurons(sampleId: String): [Neuron!]!
+    
     tracings(pageInput: SwcTracingPageInput): SwcTracingPage!
     tracing(id: String): SwcTracing!
     tracingNodes(id: String): [SwcNode!]!
     tracingNode(id: String): SwcNode!
+    
     structureIdentifiers: [StructureIdentifier!]!
     structureIdentifier(id: String): StructureIdentifier!
+    
     tracingStructures: [TracingStructure!]!
+
+    transformedTracingCount(id: String): TracingsForSwcOutput
 
     systemMessage: String
 }
 
 type Mutation {
-   uploadSwc(annotator: String, neuronId: String, structureId: String, files: [UploadedFile]): UploadOutput!
-   updateSwc(id: String, files: [UploadedFile]): UploadOutput!
+    uploadSwc(annotator: String, neuronId: String, structureId: String, file: Upload): UploadOutput!
    
-   transformedTracingsForSwc(id: String): TracingsForSwcOutput
+    updateTracing(tracing: SwcTracingInput): UpdateSwcTracingOutput!
    
-   updateTracing(tracing: SwcTracingInput): UpdateSwcTracingOutput!
+    deleteTracing(id: String!): DeleteSwcTracingOutput
+    deleteTracings(ids: [String!]): [DeleteSwcTracingOutput]
+    deleteTracingsForNeurons(neuronIds: [String!]): [DeleteSwcTracingOutput]
    
-   deleteTracing(id: String!): DeleteSwcTracingOutput
-   deleteTracings(ids: [String!]): [DeleteSwcTracingOutput]
-   deleteTracingsForNeurons(neuronIds: [String!]): [DeleteSwcTracingOutput]
-   
-   setSystemMessage(message: String): Boolean
-   clearSystemMessage: Boolean
+    setSystemMessage(message: String): Boolean
+    clearSystemMessage: Boolean
 }
 
 schema {
-  query: Query
-  mutation: Mutation
+    query: Query
+    mutation: Mutation
 }`;
 
 export default typeDefinitions;

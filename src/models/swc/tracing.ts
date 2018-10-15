@@ -1,4 +1,4 @@
-import {ISwcNode} from "./tracingNode";
+import {ISwcNodeAttributes} from "./tracingNode";
 import {ITracingStructure} from "./tracingStructure";
 
 export interface ISwcTracingInput {
@@ -19,7 +19,7 @@ export interface ISwcTracing {
     offsetZ: number;
     tracingStructureId: string;
 
-    getNodes(): ISwcNode[];
+    getNodes(): ISwcNodeAttributes[];
     getTracingStructure(): ITracingStructure;
 }
 
