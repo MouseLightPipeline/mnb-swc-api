@@ -11,7 +11,7 @@
   "scripts": {
     "debug": "DEBUG=mnb* node $NODE_DEBUG_OPTION --trace-deprecation src/app.js",
     "docker-build": "gulp docker-build",
-    "release": "gulp release"
+    "docker-release": "gulp release"
   },
   "dependencies": {
     "apollo-cache-inmemory": "^1.3.5",
