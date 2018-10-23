@@ -30,7 +30,7 @@ const databaseServices = {
 const graphQLServices = {
     transform: {
         host: "transform-api",
-        port: 9661,
+        port: 5000,
         graphQLEndpoint: "graphql"
     }
 };
