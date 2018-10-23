@@ -11,7 +11,12 @@ import {GraphQLServerContext} from "./graphql/serverContext";
 
 const app = express();
 
-const server = new ApolloServer({typeDefs: typeDefinitions, resolvers, context: () => new GraphQLServerContext()});
+const server = new ApolloServer({
+    typeDefs: typeDefinitions, resolvers,
+    introspection: true,
+    playground: true,
+    context: () => new GraphQLServerContext()
+});
 
 server.applyMiddleware({app, path: ServiceOptions.graphQLEndpoint});
 
