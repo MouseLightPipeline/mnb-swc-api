@@ -190,22 +190,22 @@ input SwcTracingPageInput {
 type Query {
     samples: [Sample!]!
     sample(id: String): Sample
-    
-    mouseStrains: [MouseStrain!]!    
+
+    mouseStrains: [MouseStrain!]!
     mouseStrain(id: String): MouseStrain
-    
+
     injections: [Injection!]!
-    
+
     neurons(sampleId: String): [Neuron!]!
-    
+
     tracings(pageInput: SwcTracingPageInput): SwcTracingPage!
     tracing(id: String): SwcTracing!
     tracingNodes(id: String): [SwcNode!]!
     tracingNode(id: String): SwcNode!
-    
+
     structureIdentifiers: [StructureIdentifier!]!
     structureIdentifier(id: String): StructureIdentifier!
-    
+
     tracingStructures: [TracingStructure!]!
 
     transformedTracingCount(id: String): TracingsForSwcOutput
@@ -215,13 +215,13 @@ type Query {
 
 type Mutation {
     uploadSwc(annotator: String, neuronId: String, structureId: String, file: Upload): UploadOutput!
-   
+
     updateTracing(tracing: SwcTracingInput): UpdateSwcTracingOutput!
-   
+
     deleteTracing(id: String!): DeleteSwcTracingOutput
     deleteTracings(ids: [String!]): [DeleteSwcTracingOutput]
     deleteTracingsForNeurons(neuronIds: [String!]): [DeleteSwcTracingOutput]
-   
+
     setSystemMessage(message: String): Boolean
     clearSystemMessage: Boolean
 }

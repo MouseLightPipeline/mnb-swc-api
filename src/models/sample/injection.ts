@@ -1,20 +1,10 @@
 import {DataTypes, Instance, Model, Models} from "sequelize";
 
-import {INeuronAttributes} from "./neuron";
-import {IFluorophoreAttributes} from "./fluorophore";
-import {IInjectionVirusAttributes} from "./injectionVirus";
-import {IBrainAreaAttributes} from "./brainArea";
-import {ISampleAttributes} from "./sample";
-
-export interface IInjectionInput {
-    id: string;
-    brainAreaId?: string;
-    injectionVirusId?: string;
-    injectionVirusName?: string;
-    fluorophoreId?: string;
-    fluorophoreName?: string;
-    sampleId?: string;
-}
+import {INeuron} from "./neuron";
+import {IFluorophore} from "./fluorophore";
+import {IInjectionVirus} from "./injectionVirus";
+import {IBrainArea} from "./brainArea";
+import {ISample} from "./sample";
 
 export interface IInjectionAttributes {
     id?: string;
@@ -24,16 +14,14 @@ export interface IInjectionAttributes {
     sampleId?: string;
     createdAt?: Date;
     updatedAt?: Date;
-
-    getSample?(): ISampleAttributes;
-    getBrainArea?(): IBrainAreaAttributes;
-    getInjectionVirus?(): IInjectionVirusAttributes;
-    getFluorophore?(): IFluorophoreAttributes;
-    getNeurons?(): INeuronAttributes[];
 }
 
 export interface IInjection extends Instance<IInjectionAttributes>, IInjectionAttributes {
-    getSamples(): ISampleAttributes[];
+    getSamples(): ISample[];
+    getBrainArea?(): IBrainArea;
+    getInjectionVirus?(): IInjectionVirus;
+    getFluorophore?(): IFluorophore;
+    getNeurons?(): INeuron[];
 }
 
 export interface IInjectionTable extends Model<IInjection, IInjectionAttributes> {

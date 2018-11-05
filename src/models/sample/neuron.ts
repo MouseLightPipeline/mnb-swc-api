@@ -1,7 +1,7 @@
 import {DataTypes, Instance, Model, Models} from "sequelize";
 
-import {IInjectionAttributes} from "./injection";
-import {IBrainAreaAttributes} from "./brainArea";
+import {IInjection} from "./injection";
+import {IBrainArea} from "./brainArea";
 
 export interface INeuronAttributes {
     id?: string;
@@ -21,8 +21,11 @@ export interface INeuronAttributes {
 }
 
 export interface INeuron extends Instance<INeuronAttributes>, INeuronAttributes {
-    getInjection(): IInjectionAttributes;
-    getBrainArea(): IBrainAreaAttributes;
+    injection: IInjection;
+    getInjection(): IInjection;
+
+    brainArea: IBrainArea;
+    getBrainArea(): IBrainArea;
 }
 
 export interface INeuronTable extends Model<INeuron, INeuronAttributes> {

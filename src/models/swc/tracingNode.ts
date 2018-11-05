@@ -1,5 +1,6 @@
-import {IStructureIdentifier} from "./structureIdentifier";
+import {IStructureIdentifierAttributes} from "./structureIdentifier";
 import {DataTypes, Instance, Model} from "sequelize";
+import {ISwcTracing} from "./tracing";
 
 export interface ISwcNodeAttributes {
     id: string;
@@ -15,11 +16,12 @@ export interface ISwcNodeAttributes {
     updatedAt?: Date;
 }
 
-export interface ISwcNode extends Instance<ISwcNodeAttributes>, ISwcNodeAttributes {
-    getStructureIdentifier(): IStructureIdentifier;
+export interface ISwcTracingNode extends Instance<ISwcNodeAttributes>, ISwcNodeAttributes {
+    getStructureIdentifier(): IStructureIdentifierAttributes;
+    getTracing(): ISwcTracing;
 }
 
-export interface ISwcNodeTable extends Model<ISwcNode, ISwcNodeAttributes> {
+export interface ISwcTracingNodeTable extends Model<ISwcTracingNode, ISwcNodeAttributes> {
 }
 
 export const TableName = "SwcTracingNode";

@@ -1,5 +1,5 @@
-import * as express from "express";
 import * as os from "os";
+import * as express from "express";
 import {ApolloServer} from "apollo-server-express";
 
 const debug = require("debug")("mnb:swc-api:server");

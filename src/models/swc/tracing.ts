@@ -1,15 +1,22 @@
+import {Instance, Model} from "sequelize";
+
+import {ITracingStructureAttributes} from "./tracingStructure";
 import {ISwcNodeAttributes} from "./tracingNode";
-import {ITracingStructure} from "./tracingStructure";
 
 export interface ISwcTracingInput {
     id: string;
-    annotator?: string;
     neuronId?: string;
+    filename?: string;
+    annotator?: string;
+    fileComments?: string;
+    offsetX?: number;
+    offsetY?: number;
+    offsetZ?: number;
     tracingStructureId?: string;
 }
 
-export interface ISwcTracing {
-    id: string;
+export interface ISwcTracingAttributes {
+    id?: string;
     neuronId: string;
     filename: string;
     annotator: string;
@@ -19,8 +26,14 @@ export interface ISwcTracing {
     offsetZ: number;
     tracingStructureId: string;
 
+}
+
+export interface ISwcTracing extends Instance<ISwcTracingAttributes>, ISwcTracingAttributes {
     getNodes(): ISwcNodeAttributes[];
-    getTracingStructure(): ITracingStructure;
+    getTracingStructure(): ITracingStructureAttributes;
+}
+
+export interface ISwcTracingTable extends Model<ISwcTracing, ISwcTracingAttributes> {
 }
 
 export const TableName = "SwcTracing";

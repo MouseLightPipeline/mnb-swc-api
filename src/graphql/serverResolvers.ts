@@ -1,7 +1,5 @@
-import { GraphQLScalarType } from 'graphql';
-import { Kind } from 'graphql/language';
-
-const debug = require("debug")("mnb:swc-api:resolvers");
+import { GraphQLScalarType } from "graphql";
+import { Kind } from "graphql/language";
 
 import {
     IDeleteSwcTracingOutput,
@@ -12,10 +10,10 @@ import {
     IUploadOutput, IUploadFile
 } from "./serverContext";
 
-import {ISwcTracing, ISwcTracingInput} from "../models/swc/tracing";
+import {ISwcTracingAttributes, ISwcTracingInput} from "../models/swc/tracing";
 import {ISwcNodeAttributes} from "../models/swc/tracingNode";
-import {IStructureIdentifier} from "../models/swc/structureIdentifier";
-import {ITracingStructure} from "../models/swc/tracingStructure";
+import {IStructureIdentifierAttributes} from "../models/swc/structureIdentifier";
+import {ITracingStructureAttributes} from "../models/swc/tracingStructure";
 import {ISample} from "../models/sample/sample";
 import {IMouseStrain} from "../models/sample/mouseStrain";
 import {INeuron} from "../models/sample/neuron";
@@ -79,7 +77,7 @@ const resolvers = {
         tracings(_, args: ITracingsArguments, context: GraphQLServerContext): Promise<ISwcTracingPage> {
             return context.getTracings(args.pageInput);
         },
-        tracing(_, args: IIdOnlyArguments, context: GraphQLServerContext): Promise<ISwcTracing> {
+        tracing(_, args: IIdOnlyArguments, context: GraphQLServerContext): Promise<ISwcTracingAttributes> {
             return context.getTracing(args.id);
         },
         tracingNodes(_, args: IIdOnlyArguments, context: GraphQLServerContext): Promise<ISwcNodeAttributes[]> {
@@ -88,13 +86,13 @@ const resolvers = {
         tracingNode(_, args: IIdOnlyArguments, context: GraphQLServerContext): Promise<ISwcNodeAttributes> {
             return context.getTracingNode(args.id);
         },
-        structureIdentifiers(_, __, context: GraphQLServerContext): Promise<IStructureIdentifier[]> {
+        structureIdentifiers(_, __, context: GraphQLServerContext): Promise<IStructureIdentifierAttributes[]> {
             return context.getStructureIdentifiers();
         },
-        structureIdentifier(_, args: IIdOnlyArguments, context: GraphQLServerContext): Promise<IStructureIdentifier> {
+        structureIdentifier(_, args: IIdOnlyArguments, context: GraphQLServerContext): Promise<IStructureIdentifierAttributes> {
             return context.getStructureIdentifier(args.id);
         },
-        tracingStructures(_, __, context: GraphQLServerContext): Promise<ITracingStructure[]> {
+        tracingStructures(_, __, context: GraphQLServerContext): Promise<ITracingStructureAttributes[]> {
             return context.getTracingStructures();
         },
         transformedTracingCount(_, args: IIdOnlyArguments, context: GraphQLServerContext): Promise<IQueryTracingsForSwcOutput> {
@@ -182,7 +180,7 @@ const resolvers = {
         nodeCount(tracing, __, context: GraphQLServerContext): Promise<number> {
             return context.getNodeCount(tracing);
         },
-        tracingStructure(tracing, _, context: GraphQLServerContext): Promise<ITracingStructure> {
+        tracingStructure(tracing, _, context: GraphQLServerContext): Promise<ITracingStructureAttributes> {
             return context.getStructureForTracing(tracing);
         },
         neuron(tracing, _, context: GraphQLServerContext): Promise<INeuron> {
@@ -190,10 +188,10 @@ const resolvers = {
         }
     },
     SwcNode: {
-        tracing(tracingNode, _, context: GraphQLServerContext): Promise<ISwcTracing> {
+        tracing(tracingNode, _, context: GraphQLServerContext): Promise<ISwcTracingAttributes> {
             return context.getTracingForNode(tracingNode);
         },
-        structureIdentifier(tracingNode, _, context: GraphQLServerContext): Promise<IStructureIdentifier> {
+        structureIdentifier(tracingNode, _, context: GraphQLServerContext): Promise<IStructureIdentifierAttributes> {
             return context.getStructureForNode(tracingNode);
         }
     },
@@ -203,8 +201,8 @@ const resolvers = {
         }
     },
     Date: new GraphQLScalarType({
-        name: 'Date',
-        description: 'Date custom scalar type',
+        name: "Date",
+        description: "Date custom scalar type",
         parseValue: (value) => {
             return new Date(value); // value from the client
         },

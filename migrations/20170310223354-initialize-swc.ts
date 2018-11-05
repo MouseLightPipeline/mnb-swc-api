@@ -43,16 +43,16 @@ export = {
                 neuronId: Sequelize.UUID,
                 filename: {
                     type: Sequelize.TEXT,
-                    defaultValue: ''
+                    defaultValue: ""
                 },
                 annotator: {
                     type: Sequelize.TEXT,
-                    defaultValue: ''
+                    defaultValue: ""
                 },
                 // comment lines found in SWC file
                 fileComments: {
                     type: Sequelize.TEXT,
-                    defaultValue: ''
+                    defaultValue: ""
                 },
                 // Janelia offset defined in file comments
                 offsetX: {

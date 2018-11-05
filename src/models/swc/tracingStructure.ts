@@ -1,9 +1,19 @@
+import {Instance, Model} from "sequelize";
+import {ISwcTracing} from "./tracing";
+
 export const TableName = "TracingStructure";
 
-export interface ITracingStructure {
+export interface ITracingStructureAttributes {
     id: string;
     name: string;
     value: number;
+}
+
+export interface ITracingStructure extends Instance<ITracingStructureAttributes>, ITracingStructureAttributes {
+    getSwcTracings(): ISwcTracing[];
+}
+
+export interface ITracingStructureTable extends Model<ITracingStructure, ITracingStructureAttributes> {
 }
 
 export function sequelizeImport(sequelize, DataTypes) {

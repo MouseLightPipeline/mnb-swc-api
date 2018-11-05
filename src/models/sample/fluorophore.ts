@@ -1,6 +1,6 @@
 import {DataTypes, Instance, Model, Models} from "sequelize";
 
-import {IInjectionAttributes} from "./injection";
+import {IInjection} from "./injection";
 
 export interface IFluorophoreAttributes {
     id?: string;
@@ -10,7 +10,7 @@ export interface IFluorophoreAttributes {
 }
 
 export interface IFluorophore extends Instance<IFluorophoreAttributes>, IFluorophoreAttributes {
-    getInjections(): IInjectionAttributes[];
+    getInjections(): IInjection[];
 }
 
 export interface IFluorophoreTable extends Model<IFluorophore, IFluorophoreAttributes> {

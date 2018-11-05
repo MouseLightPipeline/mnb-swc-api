@@ -1,41 +1,76 @@
 import * as path from "path";
-
-const Sequelize = require("sequelize");
+import {Sequelize, QueryInterface} from "sequelize";
+import * as SequelizeFactory from "sequelize";
 
 const debug = require("debug")("mnb:swc-api:database-connector");
 
 import {loadModels} from "./modelLoader";
-import {QueryInterface} from "sequelize";
 import {SequelizeOptions} from "../options/coreServicesOptions";
+import {IBrainAreaTable} from "../models/sample/brainArea";
+import {IFluorophoreTable} from "../models/sample/fluorophore";
+import {IInjectionTable} from "../models/sample/injection";
+import {IInjectionVirusTable} from "../models/sample/injectionVirus";
+import {IMouseStrainTable} from "../models/sample/mouseStrain";
+import {INeuronTable} from "../models/sample/neuron";
+import {ITransformTable} from "../models/sample/transform";
+import {ISampleTable} from "../models/sample/sample";
+import {ISwcTracingNodeTable} from "../models/swc/tracingNode";
+import {ISwcTracingTable} from "../models/swc/tracing";
+import {ITracingStructureTable} from "../models/swc/tracingStructure";
+import {IStructureIdentifierTable} from "../models/swc/structureIdentifier";
 
-export interface ISampleDatabaseModels {
-    BrainArea?: any
-    Fluorophore?: any
-    InjectionVirus?: any
-    MouseStrain?: any
-    Sample?: any;
-    Injection?: any;
-    RegistrationTransform?: any;
-    Neuron?: any;
-}
-
-export interface ISwcDatabaseModels {
-    SwcTracing?: any;
-    SwcTracingNode?: any;
-    StructureIdentifier?: any;
-    TracingStructure?: any;
-}
-
-export interface ISequelizeDatabase<T> {
-    connection: any;
+export interface ILocalDatabase<T> {
+    connection: Sequelize;
     models: T;
     isConnected: boolean;
 }
 
+export class SampleTables {
+    public constructor() {
+        this.BrainArea = null;
+        this.Fluorophore = null;
+        this.Injection = null;
+        this.InjectionVirus = null;
+        this.MouseStrain = null;
+        this.Neuron = null;
+        this.Sample = null;
+        this.RegistrationTransform = null;
+    }
+
+    BrainArea: IBrainAreaTable;
+    Fluorophore: IFluorophoreTable;
+    Injection: IInjectionTable;
+    InjectionVirus: IInjectionVirusTable;
+    MouseStrain: IMouseStrainTable;
+    Neuron: INeuronTable;
+    RegistrationTransform: ITransformTable;
+    Sample: ISampleTable;
+}
+
+export interface ISampleDatabase extends ILocalDatabase<SampleTables> {
+}
+
+export class SwcTables {
+    public constructor() {
+        this.SwcTracing = null;
+        this.SwcTracingNode = null;
+        this.StructureIdentifier = null;
+        this.TracingStructure = null;
+    }
+
+    SwcTracing: ISwcTracingTable;
+    SwcTracingNode: ISwcTracingNodeTable;
+    StructureIdentifier: IStructureIdentifierTable;
+    TracingStructure: ITracingStructureTable;
+}
+
+export interface ISwcDatabase extends ILocalDatabase<SwcTables> {
+}
+
 export class PersistentStorageManager {
 
-    private sampleDatabase: ISequelizeDatabase<ISampleDatabaseModels>;
-    private swcDatabase: ISequelizeDatabase<ISwcDatabaseModels>;
+    private sampleDatabase: ISampleDatabase;
+    private swcDatabase: ISwcDatabase;
 
     public static Instance(): PersistentStorageManager {
         return _manager;
@@ -69,14 +104,6 @@ export class PersistentStorageManager {
         return this.sampleDatabase.models.InjectionVirus;
     }
 
-    public get Fluorophores() {
-        return this.sampleDatabase.models.Fluorophore;
-    }
-
-    public get BrainAreas() {
-        return this.sampleDatabase.models.BrainArea;
-    }
-
     public get SwcTracings() {
         return this.swcDatabase.models.SwcTracing;
     }
@@ -94,10 +121,10 @@ export class PersistentStorageManager {
     }
 
     public async initialize() {
-        this.sampleDatabase = await createConnection("sample", {});
+        this.sampleDatabase = await createConnection<SampleTables>("sample", new SampleTables());
         await authenticate(this.sampleDatabase, "sample");
 
-        this.swcDatabase = await createConnection("swc", {});
+        this.swcDatabase = await createConnection<SwcTables>("swc", new SwcTables());
         await authenticate(this.swcDatabase, "swc");
 
         await this.seedIfRequired();
@@ -147,15 +174,15 @@ async function authenticate(database, name) {
 async function createConnection<T>(name: string, models: T) {
     let databaseConfig = SequelizeOptions[name];
 
-    let db: ISequelizeDatabase<T> = {
+    let db: ILocalDatabase<T> = {
         connection: null,
         models: models,
         isConnected: false
     };
 
-    db.connection = new Sequelize(databaseConfig.database, databaseConfig.username, databaseConfig.password, databaseConfig);
+    db.connection = new SequelizeFactory(databaseConfig.database, databaseConfig.username, databaseConfig.password, databaseConfig);
 
-    return await loadModels(db, path.join(__dirname,  "..", "models",  name));
+    return await loadModels<T>(db, path.join(__dirname,  "..", "models",  name));
 }
 
 function loadTracingStructures(when: Date) {

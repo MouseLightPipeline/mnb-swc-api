@@ -1,6 +1,6 @@
 import {DataTypes, Instance, Model, Models} from "sequelize";
 
-import {ISampleAttributes} from "./sample";
+import {ISample} from "./sample";
 
 export interface IMouseStrainAttributes {
     id?: string;
@@ -10,7 +10,7 @@ export interface IMouseStrainAttributes {
 }
 
 export interface IMouseStrain extends Instance<IMouseStrainAttributes>, IMouseStrainAttributes {
-    getSamples(): ISampleAttributes[];
+    getSamples(): ISample[];
 }
 
 export interface IMouseStrainTable extends Model<IMouseStrain, IMouseStrainAttributes> {

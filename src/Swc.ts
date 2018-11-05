@@ -1,8 +1,6 @@
 import * as byline from "byline";
 import * as fs from "fs";
 
-import {IUploadFile} from "./graphql/serverContext";
-
 export interface ISwcRow {
     sampleNumber: number;
     structure: number;
@@ -25,7 +23,7 @@ export interface ISwcParseResult {
 
 const SOMA_STRUCTURE_IDENTIFIER_INDEX = 1;
 
-export async function swcParse(stream1: fs.ReadStream, encoding: string): Promise<any> {
+export async function swcParse(stream1: fs.ReadStream): Promise<any> {
     const stream = byline.createStream(stream1);
 
     let parseOutput: ISwcParseResult = {
@@ -42,7 +40,7 @@ export async function swcParse(stream1: fs.ReadStream, encoding: string): Promis
         stream.on("readable", () => {
             let line: Buffer;
             while ((line = stream.read()) !== null) {
-                onData(line.toString('utf8'), parseOutput);
+                onData(line.toString("utf8"), parseOutput);
             }
         });
         stream.on("end", () => {

@@ -1,6 +1,6 @@
 import {DataTypes, Instance, Model, Models} from "sequelize";
 
-import {ISampleAttributes, ISampleTable} from "./sample";
+import {ISample} from "./sample";
 
 export interface ITransformAttributes {
     id?: string;
@@ -13,7 +13,7 @@ export interface ITransformAttributes {
 }
 
 export interface ITransform extends Instance<ITransformAttributes>, ITransformAttributes {
-    getSample(): ISampleAttributes;
+    getSample(): ISample;
 }
 
 export interface ITransformTable extends Model<ITransform, ITransformAttributes> {

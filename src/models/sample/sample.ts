@@ -1,21 +1,8 @@
 import {DataTypes, Instance, Model, Models} from "sequelize";
 
-import {IInjectionAttributes} from "./injection";
-import {ITransformAttributes} from "./transform";
-import {IMouseStrainAttributes} from "./mouseStrain";
-
-export interface ISampleInput {
-    id: string,
-    idNumber?: number;
-    animalId?: string;
-    tag?: string;
-    comment?: string;
-    sampleDate?: number;
-    mouseStrainId?: string;
-    mouseStrainName?: string;
-    activeRegistrationTransformId: string;
-    sharing?: number;
-}
+import {IInjection} from "./injection";
+import {ITransform} from "./transform";
+import {IMouseStrain} from "./mouseStrain";
 
 export interface ISampleAttributes {
     id?: string,
@@ -32,9 +19,9 @@ export interface ISampleAttributes {
 }
 
 export interface ISample extends Instance<ISampleAttributes>, ISampleAttributes {
-    getInjections(): IInjectionAttributes[];
-    getRegistrationTransforms(): ITransformAttributes[];
-    getMouseStrain(): IMouseStrainAttributes;
+    getInjections(): IInjection[];
+    getRegistrationTransforms(): ITransform[];
+    getMouseStrain(): IMouseStrain;
 }
 
 export interface ISampleTable extends Model<ISample, ISampleAttributes> {

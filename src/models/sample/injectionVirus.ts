@@ -1,6 +1,6 @@
 import {DataTypes, Instance, Model, Models} from "sequelize";
 
-import {IInjectionAttributes} from "./injection";
+import {IInjection} from "./injection";
 
 export interface IInjectionVirusAttributes {
     id?: string;
@@ -10,7 +10,7 @@ export interface IInjectionVirusAttributes {
 }
 
 export interface IInjectionVirus extends Instance<IInjectionVirusAttributes>, IInjectionVirusAttributes {
-    getInjections(): IInjectionAttributes[];
+    getInjections(): IInjection[];
 }
 
 export interface IInjectionVirusTable extends Model<IInjectionVirus, IInjectionVirusAttributes> {

@@ -1,9 +1,5 @@
-export interface IStructureIdentifier {
-    id: string;
-    name: string;
-    value: number;
-    mutable: boolean;
-}
+import {Instance, Model} from "sequelize";
+import {ISwcTracingNode} from "./tracingNode";
 
 export enum StructureIdentifiers {
     undefined = 0,
@@ -13,6 +9,22 @@ export enum StructureIdentifiers {
     apicalDendrite = 4,
     forkPoint = 5,
     endPoint = 6
+}
+
+export interface IStructureIdentifierAttributes {
+    id: string;
+    name: string;
+    value: number;
+    mutable: boolean;
+}
+
+export interface IStructureIdentifier extends Instance<IStructureIdentifierAttributes>, IStructureIdentifierAttributes {
+    getNodes(): ISwcTracingNode[];
+}
+
+export interface IStructureIdentifierTable extends Model<IStructureIdentifier, IStructureIdentifierAttributes> {
+    idForValue(val: number): string;
+    valueForId(id: string): number;
 }
 
 export const TableName = "StructureIdentifier";
