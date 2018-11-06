@@ -95,8 +95,8 @@ const resolvers = {
         tracingStructures(_, __, context: GraphQLServerContext): Promise<ITracingStructureAttributes[]> {
             return context.getTracingStructures();
         },
-        transformedTracingCount(_, args: IIdOnlyArguments, context: GraphQLServerContext): Promise<IQueryTracingsForSwcOutput> {
-            return context.transformedTracingCount(args.id);
+        transformedTracingCounts(_, args: IIdsArguments, context: GraphQLServerContext): Promise<IQueryTracingsForSwcOutput> {
+            return context.transformedTracingCount(args.ids);
         },
         systemMessage(): String {
             return systemMessage;

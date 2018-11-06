@@ -158,8 +158,13 @@ type UploadOutput {
     error: Error
 }
 
-type TracingsForSwcOutput {
+type TracingsForSwcTracingCount {
+    swcTracingId: String
     count: Int
+}
+
+type TracingsForSwcTracingsOutput {
+    counts: [TracingsForSwcTracingCount]
     error: Error
 }
 
@@ -208,7 +213,7 @@ type Query {
 
     tracingStructures: [TracingStructure!]!
 
-    transformedTracingCount(id: String): TracingsForSwcOutput
+    transformedTracingCounts(ids: [String!]): TracingsForSwcTracingsOutput
 
     systemMessage: String
 }

@@ -1,10 +1,11 @@
-import {transformClient} from "../external/transformApiClient";
+import * as _ from "lodash";
 import {Op} from "sequelize";
 
 const debug = require("debug")("mnb:swc-api:context");
 
 import {swcParse} from "../Swc";
 
+import {transformClient} from "../external/transformApiClient";
 import {ISwcTracing, ISwcTracingAttributes, ISwcTracingInput} from "../models/swc/tracing";
 import {ISwcTracingNode, ISwcNodeAttributes} from "../models/swc/tracingNode";
 import {IStructureIdentifierAttributes} from "../models/swc/structureIdentifier";
@@ -47,8 +48,14 @@ export interface IUploadOutput {
     error: Error;
 }
 
-export interface IQueryTracingsForSwcOutput {
+export interface ITracingsForSwcTracingCount {
+    swcTracingId: string;
     count: number;
+}
+
+
+export interface IQueryTracingsForSwcOutput {
+    counts: ITracingsForSwcTracingCount[];
     error: Error;
 }
 
@@ -206,6 +213,7 @@ export class GraphQLServerContext {
         } else {
             out.tracings = await this._storageManager.SwcTracings.findAll(options);
         }
+
         return out;
     }
 
@@ -444,27 +452,36 @@ export class GraphQLServerContext {
         }
     }
 
-    public async transformedTracingCount(id: string): Promise<IQueryTracingsForSwcOutput> {
-        let tracing = await this._storageManager.SwcTracings.findById(id);
-
-        if (!tracing) {
-            return {count: -1, error: {name: "DoesNotExistError", message: "A tracing with that id does not exist"}};
-        }
-
+    public async transformedTracingCount(ids: string[]): Promise<IQueryTracingsForSwcOutput> {
         try {
-            const out = await transformClient.queryTracing(id);
+            const out = await transformClient.queryTracings(ids);
 
-            return {count: out.data.tracings.tracings.length, error: null};
-        } catch (err) {
-            debug(err);
-            return {
-                count: -1,
-                error: {
-                    name: "TransformApiError",
-                    message: "Could not reach the server to count transformed tracings"
+            const groups = _.groupBy(out.data.tracings.tracings, "swcTracing.id");
+
+            const counts = [];
+
+            if (ids.length === 0) {
+                for (const id in groups) {
+                    counts.push({
+                        swcTracingId: id,
+                        count: groups[id].length
+                    });
                 }
-            };
+            } else {
+                ids.map(id => {
+                    counts.push({
+                        swcTracingId: id,
+                        count: groups[id] !== undefined ? groups[id].length : 0
+                    });
+                });
+            }
+
+            return {counts, error: null};
+        } catch (err) {
+            debug(err.message);
+            return {counts: [], error: err};
         }
+
     }
 
     public async deleteTracing(id: string): Promise<IDeleteSwcTracingOutput> {

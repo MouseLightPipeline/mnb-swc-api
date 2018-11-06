@@ -23,11 +23,11 @@ export class TransformApiClient {
         });
     }
 
-    queryTracing(id) {
+    public queryTracings(ids: string[]) {
         return this._client.query({
             query: gql`
-                query($id: String!) {
-                  tracings(queryInput: {swcTracingIds: [$id]}) {
+                query($ids: [String!]) {
+                  tracings(queryInput: {swcTracingIds: $ids}) {
                     tracings {
                       id
                       nodeCount
@@ -42,13 +42,13 @@ export class TransformApiClient {
                   }
                 }`,
             variables: {
-                id: id
+                ids: ids
             },
             fetchPolicy: "network-only"
         });
     }
 
-    transformTracing(id: string) {
+    public transformTracing(id: string) {
         return this._client.mutate({
             mutation: gql`
                 mutation applyTransform($id: String!) {
@@ -65,7 +65,7 @@ export class TransformApiClient {
         });
     }
 
-    deleteTracingsForSwc(ids: string[]) {
+    public deleteTracingsForSwc(ids: string[]) {
         return this._client.mutate({
             mutation: gql`
                 mutation DeleteTracingsForSwc($swcTracingIds: [String!]) {
