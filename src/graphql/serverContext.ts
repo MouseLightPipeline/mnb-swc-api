@@ -416,6 +416,8 @@ export class GraphQLServerContext {
             debug(`inserted ${nodes.length} nodes from ${file.filename}`);
 
             try {
+                // TODO out.data.applyTransform can return an error if the service is running but the registration file
+                // can't be found or other similar issues.
                 const out = await transformClient.transformTracing(tracing.id);
                 transformSubmission = true;
                 debug(`successfully submitted tracing for registration transform: ${out.data.applyTransform.tracing.id}`)
