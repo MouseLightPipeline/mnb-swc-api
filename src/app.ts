@@ -20,4 +20,4 @@ const server = new ApolloServer({
 
 server.applyMiddleware({app, path: ServiceOptions.graphQLEndpoint});
 
-app.listen(ServiceOptions.port, () => debug(`swc api server is now running on http://${os.hostname()}:${ServiceOptions.port}`));
+app.listen(ServiceOptions.port, () => debug(`swc api server is now running on http://${os.hostname()}:${ServiceOptions.port}${ServiceOptions.graphQLEndpoint}`));
