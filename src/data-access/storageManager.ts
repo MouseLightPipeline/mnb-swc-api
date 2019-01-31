@@ -146,6 +146,13 @@ export class PersistentStorageManager {
 
         await queryInterface.bulkInsert("StructureIdentifiers", loadStructureIdentifiers(when), {});
         await queryInterface.bulkInsert("TracingStructures", loadTracingStructures(when), {});
+
+        // Need to fill cache if first seed - was empty when authenticate is called.
+        Object.keys(this.swcDatabase.models).map(modelName => {
+            if (this.swcDatabase.models[modelName].prepareContents) {
+                this.swcDatabase.models[modelName].prepareContents();
+            }
+        });
     }
 }
 
@@ -160,7 +167,7 @@ async function authenticate(database, name) {
         if (name === "swc") {
             Object.keys(database.models).map(modelName => {
                 if (database.models[modelName].prepareContents) {
-                    database.models[modelName].prepareContents(database.models);
+                    database.models[modelName].prepareContents();
                 }
             });
         }
