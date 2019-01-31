@@ -8,8 +8,14 @@ import {ServiceOptions} from "./options/serviceOptions";
 import {typeDefinitions} from "./graphql/typeDefinitions";
 import resolvers from "./graphql/serverResolvers";
 import {GraphQLServerContext} from "./graphql/serverContext";
+import {swcExportMiddleware} from "./middleware/swcExportMiddleware";
+import bodyParser = require("body-parser");
 
 const app = express();
+
+app.use(bodyParser.urlencoded({extended: true}));
+
+app.use(bodyParser.json());
 
 const server = new ApolloServer({
     typeDefs: typeDefinitions, resolvers,
@@ -19,5 +25,7 @@ const server = new ApolloServer({
 });
 
 server.applyMiddleware({app, path: ServiceOptions.graphQLEndpoint});
+
+app.use("/swc", swcExportMiddleware);
 
 app.listen(ServiceOptions.port, () => debug(`swc api server is now running on http://${os.hostname()}:${ServiceOptions.port}${ServiceOptions.graphQLEndpoint}`));

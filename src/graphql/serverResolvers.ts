@@ -98,7 +98,7 @@ const resolvers = {
         transformedTracingCounts(_, args: IIdsArguments, context: GraphQLServerContext): Promise<IQueryTracingsForSwcOutput> {
             return context.transformedTracingCount(args.ids);
         },
-        systemMessage(): String {
+        systemMessage(): string {
             return systemMessage;
         }
     },
@@ -218,6 +218,6 @@ const resolvers = {
     })
 };
 
-let systemMessage: String = "";
+let systemMessage: string = "";
 
 export default resolvers;
