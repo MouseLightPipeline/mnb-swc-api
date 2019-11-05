@@ -1,41 +1,66 @@
-import {DataTypes, Instance, Model, Models} from "sequelize";
+import {
+    Sequelize,
+    DataTypes,
+    BelongsToGetAssociationMixin,
+    FindOptions
+} from "sequelize";
 
-import {IInjection} from "./injection";
-import {IBrainArea} from "./brainArea";
+import {BaseModel, EntityQueryInput, EntityQueryOutput} from "../baseModel";
+import {
+    optionsWhereCompartmentIds,
+    optionsWhereIds,
+    optionsWhereInjectionIds,
+    optionsWhereSampleIds, WithCompartmentQueryInput, WithInjectionsQueryInput, WithSamplesQueryInput
+} from "./findOptions";
+import {BrainArea} from "./brainArea";
+import {Injection} from "./injection";
 
-export interface INeuronAttributes {
-    id?: string;
-    idNumber?: number;
-    idString?: string;
-    tag?: string;
-    keywords?: string;
-    x?: number;
-    y?: number;
-    z?: number;
-    doi?: string;
-    sharing?: number;
-    brainAreaId?: string;
-    injectionId?: string;
-    createdAt?: Date;
-    updatedAt?: Date;
+export type NeuronQueryInput =
+    EntityQueryInput
+    & WithSamplesQueryInput
+    & WithInjectionsQueryInput
+    & WithCompartmentQueryInput;
+
+export class Neuron extends BaseModel {
+    public idNumber: number;
+    public idString: string;
+    public tag: string;
+    public keywords: string;
+    public x: number;
+    public y: number;
+    public z: number;
+    public doi: string;
+    public sharing: number;
+
+    public getInjection!: BelongsToGetAssociationMixin<Injection>;
+    public getBrainArea!: BelongsToGetAssociationMixin<BrainArea>;
+
+    public static async getAll(input: NeuronQueryInput): Promise<EntityQueryOutput<Neuron>> {
+        let options: FindOptions = optionsWhereIds(input, {where: null, include: []});
+
+        if (input && input.sampleIds && input.sampleIds.length > 0) {
+            const injectionIds = (await Injection.findAll(optionsWhereSampleIds(input))).map((obj: Injection) => obj.id);
+
+            if (injectionIds.length === 0) {
+                return {totalCount: 0, items: []};
+            }
+
+            input.injectionIds = injectionIds.concat(input.injectionIds || []);
+        }
+
+        options = optionsWhereInjectionIds(input, options);
+        options = optionsWhereCompartmentIds(input, options);
+
+        const count = await this.setSortAndLimiting(options, input);
+
+        const neurons = await Neuron.findAll(options);
+
+        return {totalCount: count, items: neurons};
+    }
 }
 
-export interface INeuron extends Instance<INeuronAttributes>, INeuronAttributes {
-    injection: IInjection;
-    getInjection(): IInjection;
-
-    brainArea: IBrainArea;
-    getBrainArea(): IBrainArea;
-}
-
-export interface INeuronTable extends Model<INeuron, INeuronAttributes> {
-}
-
-export const TableName = "Neuron";
-
-// noinspection JSUnusedGlobalSymbols
-export function sequelizeImport(sequelize, DataTypes: DataTypes): INeuronTable {
-    const Neuron: INeuronTable = sequelize.define(TableName, {
+export const modelInit = (sequelize: Sequelize) => {
+    Neuron.init({
         id: {
             primaryKey: true,
             type: DataTypes.UUID,
@@ -78,16 +103,12 @@ export function sequelizeImport(sequelize, DataTypes: DataTypes): INeuronTable {
         }
     }, {
         timestamps: true,
-        paranoid: true
+        paranoid: true,
+        sequelize
     });
+};
 
-    Neuron.associate = (models: Models): void => {
-        Neuron.belongsTo(models.Injection, {foreignKey: "injectionId", as: "injection"});
-        Neuron.belongsTo(models.BrainArea, {
-            foreignKey: {name: "brainAreaId", allowNull: true},
-            as: "brainArea"
-        });
-    };
-
-    return Neuron;
-}
+export const modelAssociate = () => {
+    Neuron.belongsTo(Injection, {foreignKey: "injectionId"});
+    Neuron.belongsTo(BrainArea, {foreignKey: {name: "brainAreaId", allowNull: true}});
+};

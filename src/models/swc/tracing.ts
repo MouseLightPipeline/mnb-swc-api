@@ -1,10 +1,11 @@
-import {Instance, Model} from "sequelize";
+import {Sequelize, DataTypes, BelongsToGetAssociationMixin, HasManyGetAssociationsMixin} from "sequelize";
 
-import {ITracingStructureAttributes} from "./tracingStructure";
-import {ISwcNodeAttributes} from "./tracingNode";
+import {BaseModel} from "../baseModel";
+import {TracingStructure} from "./tracingStructure";
+import {SwcNode} from "./tracingNode";
 
 export interface ISwcTracingInput {
-    id: string;
+    id?: string;
     neuronId?: string;
     filename?: string;
     annotator?: string;
@@ -15,31 +16,22 @@ export interface ISwcTracingInput {
     tracingStructureId?: string;
 }
 
-export interface ISwcTracingAttributes {
-    id?: string;
-    neuronId: string;
-    filename: string;
-    annotator: string;
-    fileComments: string;
-    offsetX: number;
-    offsetY: number;
-    offsetZ: number;
-    tracingStructureId: string;
+export class SwcTracing extends BaseModel {
+    public id: string;
+    public neuronId: string;
+    public filename: string;
+    public annotator: string;
+    public fileComments: string;
+    public offsetX: number;
+    public offsetY: number;
+    public offsetZ: number;
 
+    public getTracingStructure!: BelongsToGetAssociationMixin<TracingStructure>;
+    public getNodes!: HasManyGetAssociationsMixin<SwcNode>;
 }
 
-export interface ISwcTracing extends Instance<ISwcTracingAttributes>, ISwcTracingAttributes {
-    getNodes(): ISwcNodeAttributes[];
-    getTracingStructure(): ITracingStructureAttributes;
-}
-
-export interface ISwcTracingTable extends Model<ISwcTracing, ISwcTracingAttributes> {
-}
-
-export const TableName = "SwcTracing";
-
-export function sequelizeImport(sequelize, DataTypes) {
-    const Tracing = sequelize.define(TableName, {
+export const modelInit = (sequelize: Sequelize) => {
+    SwcTracing.init({
         id: {
             primaryKey: true,
             type: DataTypes.UUID,
@@ -75,13 +67,12 @@ export function sequelizeImport(sequelize, DataTypes) {
         }
     }, {
         timestamps: true,
-        paranoid: false
+        paranoid: false,
+        sequelize
     });
+};
 
-    Tracing.associate = models => {
-        Tracing.hasMany(models.SwcTracingNode, {foreignKey: "swcTracingId", as: "Nodes"});
-        Tracing.belongsTo(models.TracingStructure, {foreignKey: "tracingStructureId"});
-    };
-
-    return Tracing;
-}
+export const modelAssociate = () => {
+    SwcTracing.hasMany(SwcNode, {foreignKey: "swcTracingId", as: "Nodes"});
+    SwcTracing.belongsTo(TracingStructure, {foreignKey: "tracingStructureId"});
+};

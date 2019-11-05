@@ -10,22 +10,31 @@ import resolvers from "./graphql/serverResolvers";
 import {GraphQLServerContext} from "./graphql/serverContext";
 import {swcExportMiddleware} from "./middleware/swcExportMiddleware";
 import bodyParser = require("body-parser");
+import {RemoteDatabaseClient} from "./data-access/storageManager";
+import {SequelizeOptions} from "./options/coreServicesOptions";
 
-const app = express();
+start().then().catch((err) => debug(err));
 
-app.use(bodyParser.urlencoded({extended: true}));
+async function start() {
+    await RemoteDatabaseClient.Start("sample", SequelizeOptions.sample);
+    await RemoteDatabaseClient.Start("swc", SequelizeOptions.swc);
 
-app.use(bodyParser.json());
+    const app = express();
 
-const server = new ApolloServer({
-    typeDefs: typeDefinitions, resolvers,
-    introspection: true,
-    playground: true,
-    context: () => new GraphQLServerContext()
-});
+    app.use(bodyParser.urlencoded({extended: true}));
 
-server.applyMiddleware({app, path: ServiceOptions.graphQLEndpoint});
+    app.use(bodyParser.json());
 
-app.use("/swc", swcExportMiddleware);
+    const server = new ApolloServer({
+        typeDefs: typeDefinitions, resolvers,
+        introspection: true,
+        playground: true,
+        context: () => new GraphQLServerContext()
+    });
 
-app.listen(ServiceOptions.port, () => debug(`swc api server is now running on http://${os.hostname()}:${ServiceOptions.port}${ServiceOptions.graphQLEndpoint}`));
+    server.applyMiddleware({app, path: ServiceOptions.graphQLEndpoint});
+
+    app.use("/swc", swcExportMiddleware);
+
+    app.listen(ServiceOptions.port, () => debug(`swc api server is now running on http://${os.hostname()}:${ServiceOptions.port}${ServiceOptions.graphQLEndpoint}`));
+}

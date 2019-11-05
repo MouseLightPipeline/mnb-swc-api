@@ -6,19 +6,18 @@ const debug = require("debug")("mnb:swc-api:context");
 import {swcParse} from "../Swc";
 
 import {transformClient} from "../external/transformApiClient";
-import {ISwcTracing, ISwcTracingAttributes, ISwcTracingInput} from "../models/swc/tracing";
-import {ISwcTracingNode, ISwcNodeAttributes} from "../models/swc/tracingNode";
-import {IStructureIdentifierAttributes} from "../models/swc/structureIdentifier";
-import {ITracingStructureAttributes} from "../models/swc/tracingStructure";
-import {ISample} from "../models/sample/sample";
-import {IMouseStrain} from "../models/sample/mouseStrain";
-import {IInjection} from "../models/sample/injection";
-import {IFluorophore} from "../models/sample/fluorophore";
-import {IInjectionVirus} from "../models/sample/injectionVirus";
-import {INeuron} from "../models/sample/neuron";
-import {IBrainArea} from "../models/sample/brainArea";
-import {ITransform} from "../models/sample/transform";
-import {PersistentStorageManager} from "../data-access/storageManager";
+import {Sample} from "../models/sample/sample";
+import {StructureIdentifier} from "../models/swc/structureIdentifier";
+import {ISwcTracingInput, SwcTracing} from "../models/swc/tracing";
+import {MouseStrain} from "../models/sample/mouseStrain";
+import {Injection} from "../models/sample/injection";
+import {InjectionVirus} from "../models/sample/injectionVirus";
+import {Neuron} from "../models/sample/neuron";
+import {RegistrationTransform} from "../models/sample/transform";
+import {BrainArea} from "../models/sample/brainArea";
+import {Fluorophore} from "../models/sample/fluorophore";
+import {TracingStructure} from "../models/swc/tracingStructure";
+import {SwcNode, SwcNodeMutationData} from "../models/swc/tracingNode";
 
 export interface IUploadFile {
     filename: string;
@@ -39,11 +38,11 @@ export interface ISwcTracingPage {
     limit: number;
     totalCount: number;
     matchCount: number;
-    tracings: ISwcTracingAttributes[];
+    tracings: SwcTracing[];
 }
 
 export interface IUploadOutput {
-    tracing: ISwcTracingAttributes;
+    tracing: SwcTracing;
     transformSubmission: boolean;
     error: Error;
 }
@@ -60,7 +59,7 @@ export interface IQueryTracingsForSwcOutput {
 }
 
 export interface IUpdateSwcTracingOutput {
-    tracing: ISwcTracingAttributes;
+    tracing: SwcTracing;
     error: Error;
 }
 
@@ -70,103 +69,101 @@ export interface IDeleteSwcTracingOutput {
 }
 
 export class GraphQLServerContext {
-    private _storageManager = PersistentStorageManager.Instance();
-
     public getStructureIdValue(id: string): number {
-        return this._storageManager.StructureIdentifiers.valueForId(id);
+        return StructureIdentifier.valueForId(id);
     }
 
-    public async getSamples(): Promise<ISample[]> {
-        return this._storageManager.Samples.findAll({order: [["idNumber", "ASC"]]});
+    public async getSamples(): Promise<Sample[]> {
+        return Sample.findAll({order: [["idNumber", "ASC"]]});
     }
 
-    public async getSample(id: string): Promise<ISample> {
+    public async getSample(id: string): Promise<Sample> {
         if (!id) {
             return null;
         }
 
-        return await this._storageManager.Samples.findById(id);
+        return Sample.findByPk(id);
     }
 
-    public async getMouseStrains(): Promise<IMouseStrain[]> {
-        return this._storageManager.MouseStrains.findAll({});
+    public async getMouseStrains(): Promise<MouseStrain[]> {
+        return MouseStrain.findAll({});
     }
 
-    public async getMouseStrain(id: string): Promise<IMouseStrain> {
-        return this._storageManager.MouseStrains.findById(id);
+    public async getMouseStrain(id: string): Promise<MouseStrain> {
+        return MouseStrain.findByPk(id);
     }
 
-    public async getInjectionsForSample(sample: ISample): Promise<IInjection[]> {
+    public async getInjectionsForSample(sample: Sample): Promise<Injection[]> {
         if (!sample || !sample.id || sample.id.length === 0) {
             return [];
         }
 
-        return this._storageManager.Injections.findAll({
+        return Injection.findAll({
             where: {sampleId: sample.id}
         });
     }
 
-    public async getInjections(): Promise<IInjection[]> {
-        return this._storageManager.Injections.findAll({});
+    public async getInjections(): Promise<Injection[]> {
+        return Injection.findAll({});
     }
 
-    public async getInjection(id: string): Promise<IInjection> {
-        return this._storageManager.Injections.findById(id);
+    public async getInjection(id: string): Promise<Injection> {
+        return Injection.findByPk(id);
     }
 
-    public async getNeuronsForInjection(injection: IInjection): Promise<INeuron[]> {
-        const result = await this._storageManager.Injections.findById(injection.id);
+    public async getNeuronsForInjection(injection: Injection): Promise<Neuron[]> {
+        const result = await Injection.findByPk(injection.id);
 
         return result ? result.getNeurons() : [];
     }
 
-    public async getVirusForInjection(injection: IInjection): Promise<IInjectionVirus> {
-        const result = await this._storageManager.Injections.findById(injection.id);
+    public async getVirusForInjection(injection: Injection): Promise<InjectionVirus> {
+        const result = await Injection.findByPk(injection.id);
 
         return result ? result.getInjectionVirus() : null;
     }
 
-    public async getFluorophoreForInjection(injection: IInjection): Promise<IFluorophore> {
-        const result = await this._storageManager.Injections.findById(injection.id);
+    public async getFluorophoreForInjection(injection: Injection): Promise<Fluorophore> {
+        const result = await Injection.findByPk(injection.id);
 
         return result ? result.getFluorophore() : null;
     }
 
-    public async getBrainAreaForInjection(injection: IInjection): Promise<IBrainArea> {
-        const result = await this._storageManager.Injections.findById(injection.id);
+    public async getBrainAreaForInjection(injection: Injection): Promise<BrainArea> {
+        const result = await Injection.findByPk(injection.id);
 
         return result ? result.getBrainArea() : null;
     }
 
-    public async getRegistrationTransform(id: string): Promise<ITransform> {
-        return this._storageManager.RegistrationTransforms.findById(id);
+    public async getRegistrationTransform(id: string): Promise<RegistrationTransform> {
+        return RegistrationTransform.findByPk(id);
     }
 
-    public async getNeuron(id: string): Promise<INeuron> {
-        return this._storageManager.Neurons.findById(id);
+    public async getNeuron(id: string): Promise<Neuron> {
+        return Neuron.findByPk(id);
     }
 
-    public async getNeurons(sampleId: string): Promise<INeuron[]> {
+    public async getNeurons(sampleId: string): Promise<Neuron[]> {
         if (!sampleId || sampleId.length === 0) {
-            return this._storageManager.Neurons.findAll({});
+            return Neuron.findAll({});
         }
 
-        const injectionIds = (await this._storageManager.Injections.findAll({where: {sampleId: sampleId}})).map(obj => obj.id);
+        const injectionIds = (await Injection.findAll({where: {sampleId: sampleId}})).map(obj => obj.id);
 
-        return this._storageManager.Neurons.findAll({
+        return Neuron.findAll({
             where: {injectionId: {[Op.in]: injectionIds}},
             order: [["idString", "ASC"]]
         });
     }
 
-    public async getBrainAreaForNeuron(neuron: INeuron): Promise<IBrainArea> {
-        const result = await this._storageManager.Neurons.findById(neuron.id);
+    public async getBrainAreaForNeuron(neuron: Neuron): Promise<BrainArea> {
+        const result = await Neuron.findByPk(neuron.id);
 
         return result ? result.getBrainArea() : null;
     }
 
-    public async getTracingStructures(): Promise<ITracingStructureAttributes[]> {
-        return this._storageManager.TracingStructures.findAll({});
+    public async getTracingStructures(): Promise<TracingStructure[]> {
+        return TracingStructure.findAll({});
     }
 
     public async getTracings(queryInput: ISwcTracingPageInput): Promise<ISwcTracingPage> {
@@ -178,7 +175,7 @@ export class GraphQLServerContext {
             tracings: []
         };
 
-        out.totalCount = await this._storageManager.SwcTracings.count({});
+        out.totalCount = await SwcTracing.count({});
 
         let options = {where: {}};
 
@@ -191,7 +188,7 @@ export class GraphQLServerContext {
                 options.where["neuronId"] = {[Op.in]: queryInput.neuronIds}
             }
 
-            out.matchCount = await this._storageManager.SwcTracings.count(options);
+            out.matchCount = await SwcTracing.count(options);
 
             options["order"] = [["createdAt", "DESC"]];
 
@@ -209,34 +206,34 @@ export class GraphQLServerContext {
         }
 
         if (out.limit === 1) {
-            out.tracings = [await this._storageManager.SwcTracings.findOne(options)];
+            out.tracings = [await SwcTracing.findOne(options)];
         } else {
-            out.tracings = await this._storageManager.SwcTracings.findAll(options);
+            out.tracings = await SwcTracing.findAll(options);
         }
 
         return out;
     }
 
-    public async getTracing(id: string): Promise<ISwcTracingAttributes> {
-        return this._storageManager.SwcTracings.findById(id);
+    public async getTracing(id: string): Promise<SwcTracing> {
+        return SwcTracing.findByPk(id);
     }
 
-    public async getStructureForTracing(tracing: ISwcTracingAttributes): Promise<ITracingStructureAttributes> {
-        const result: ISwcTracing = await this._storageManager.SwcTracings.findById(tracing.id);
+    public async getStructureForTracing(tracing: SwcTracing): Promise<TracingStructure> {
+        const result: SwcTracing = await SwcTracing.findByPk(tracing.id);
 
         return result ? result.getTracingStructure() : null;
     }
 
-    public async getNodeCount(tracing: ISwcTracingAttributes): Promise<number> {
+    public async getNodeCount(tracing: SwcTracing): Promise<number> {
         if (!tracing || !tracing.id) {
             return 0;
         }
 
-        return this._storageManager.SwcNodes.count({where: {swcTracingId: tracing.id}});
+        return SwcNode.count({where: {swcTracingId: tracing.id}});
     }
 
     // TODO Unused - for reference
-    public async getNodesForTracing(tracing: ISwcTracingAttributes, first: number, count: number): Promise<ISwcNodeAttributes[]> {
+    public async getNodesForTracing(tracing: SwcTracing, first: number, count: number): Promise<SwcNode[]> {
         let offset = 0;
         let limit = 10;
 
@@ -247,7 +244,7 @@ export class GraphQLServerContext {
             limit = count;
         }
 
-        return this._storageManager.SwcNodes.findAll({
+        return SwcNode.findAll({
             where: {swcTracingId: tracing.id},
             order: [["sampleNumber", "ASC"]],
             offset: offset,
@@ -256,7 +253,7 @@ export class GraphQLServerContext {
     }
 
     // TODO Unused - for reference
-    public async getNodesConnectionForTracing(tracing: ISwcTracingAttributes, first: number, after: string): Promise<any> {
+    public async getNodesConnectionForTracing(tracing: SwcTracing, first: number, after: string): Promise<any> {
         let offset = 0;
         let limit = 10;
 
@@ -268,9 +265,9 @@ export class GraphQLServerContext {
             offset = decodeObj64(after)["offset"] + 1;
         }
 
-        let count = await this._storageManager.SwcNodes.count({where: {tracingId: tracing.id}});
+        let count = await SwcNode.count({where: {tracingId: tracing.id}});
 
-        let nodes = await this._storageManager.SwcNodes.findAll({
+        let nodes = await SwcNode.findAll({
             where: {swcTracingId: tracing.id},
             order: [["sampleNumber", "ASC"]],
             offset: offset,
@@ -289,12 +286,12 @@ export class GraphQLServerContext {
         }
     }
 
-    public async getTracingNodes(id: string): Promise<ISwcNodeAttributes[]> {
+    public async getTracingNodes(id: string): Promise<SwcNode[]> {
         let r = [];
         if (!id) {
-            r = await this._storageManager.SwcNodes.findAll({});
+            r = await SwcNode.findAll({});
         } else {
-            r = await this._storageManager.SwcNodes.findAll({where: {swcTracingId: id}});
+            r = await SwcNode.findAll({where: {swcTracingId: id}});
         }
 
         r = r.map(o => {
@@ -305,30 +302,26 @@ export class GraphQLServerContext {
         return r;
     }
 
-    public async getTracingNode(id: string): Promise<ISwcNodeAttributes> {
-        return this._storageManager.SwcNodes.findById(id);
+    public async getTracingNode(id: string): Promise<SwcNode> {
+        return SwcNode.findByPk(id);
     }
 
-    public async getTracingForNode(node: ISwcNodeAttributes): Promise<ISwcTracingAttributes> {
-        return this.getTracing(node.swcTracingId)
-    }
-
-    public async getStructureForNode(node: ISwcNodeAttributes): Promise<IStructureIdentifierAttributes> {
-        const result: ISwcTracingNode = await this._storageManager.SwcNodes.findById(node.id);
+    public async getStructureForNode(node: SwcNode): Promise<StructureIdentifier> {
+        const result: SwcNode = await SwcNode.findByPk(node.id);
 
         return result ? (await result.getStructureIdentifier()) : null;
     }
 
-    public async getStructureIdentifiers(): Promise<IStructureIdentifierAttributes[]> {
-        return this._storageManager.StructureIdentifiers.findAll({});
+    public async getStructureIdentifiers(): Promise<StructureIdentifier[]> {
+        return StructureIdentifier.findAll({});
     }
 
-    public async getStructureIdentifier(id: string): Promise<IStructureIdentifierAttributes> {
-        return this._storageManager.StructureIdentifiers.findById(id);
+    public async getStructureIdentifier(id: string): Promise<StructureIdentifier> {
+        return StructureIdentifier.findByPk(id);
     }
 
-    public async getNodesForStructure(structure: IStructureIdentifierAttributes): Promise<ISwcNodeAttributes[]> {
-        const result = await this._storageManager.StructureIdentifiers.findById(structure.id);
+    public async getNodesForStructure(structure: StructureIdentifier): Promise<SwcNode[]> {
+        const result = await StructureIdentifier.findByPk(structure.id);
 
         return result ? result.getNodes() : [];
     }
@@ -344,7 +337,7 @@ export class GraphQLServerContext {
 
         let file = await uploadFile;
 
-        let tracing: ISwcTracingAttributes = null;
+        let tracing: SwcTracing = null;
 
         let transformSubmission = false;
 
@@ -378,7 +371,7 @@ export class GraphQLServerContext {
                 };
             }
 
-            const tracingData: ISwcTracingAttributes = {
+            const tracingData: ISwcTracingInput = {
                 annotator,
                 neuronId,
                 tracingStructureId,
@@ -389,11 +382,11 @@ export class GraphQLServerContext {
                 offsetZ: parseOutput.janeliaOffsetZ
             };
 
-            let nodes: ISwcNodeAttributes[] = parseOutput.rows.map(row => {
+            let nodeData: SwcNodeMutationData[] = parseOutput.rows.map(row => {
                 return {
-                    swcTracingId: "",
+                    swcTracingId: null,
                     sampleNumber: row.sampleNumber,
-                    structureIdentifierId: this._storageManager.StructureIdentifiers.idForValue(row.structure),
+                    structureIdentifierId: StructureIdentifier.idForValue(row.structure),
                     x: row.x,
                     y: row.y,
                     z: row.z,
@@ -402,18 +395,18 @@ export class GraphQLServerContext {
                 }
             });
 
-            await this._storageManager.SwcConnection.transaction(async (t) => {
-                tracing = await this._storageManager.SwcTracings.create(tracingData, {transaction: t});
+            await SwcTracing.sequelize.transaction(async (t) => {
+                tracing = await SwcTracing.create(tracingData, {transaction: t});
 
-                nodes = nodes.map<ISwcNodeAttributes>(node => {
+                nodeData = nodeData.map(node => {
                     node.swcTracingId = tracing.id;
                     return node;
                 });
 
-                return this._storageManager.SwcNodes.bulkCreate(nodes, {transaction: t});
+                return SwcNode.bulkCreate(nodeData, {transaction: t});
             });
 
-            debug(`inserted ${nodes.length} nodes from ${file.filename}`);
+            debug(`inserted ${nodeData.length} nodes from ${file.filename}`);
 
             try {
                 // TODO out.data.applyTransform can return an error if the service is running but the registration file
@@ -435,7 +428,7 @@ export class GraphQLServerContext {
 
     public async updateTracing(tracingInput: ISwcTracingInput): Promise<IUpdateSwcTracingOutput> {
         try {
-            let tracing = await this._storageManager.SwcTracings.findById(tracingInput.id);
+            let tracing = await SwcTracing.findByPk(tracingInput.id);
 
             if (!tracing) {
                 return {
@@ -446,7 +439,7 @@ export class GraphQLServerContext {
 
             await tracing.update(tracingInput);
 
-            const updatedTracing = await this._storageManager.SwcTracings.findById(tracingInput.id);
+            const updatedTracing = await SwcTracing.findByPk(tracingInput.id);
 
             return {tracing: updatedTracing, error: null};
         } catch (error) {
@@ -487,7 +480,7 @@ export class GraphQLServerContext {
     }
 
     public async deleteTracing(id: string): Promise<IDeleteSwcTracingOutput> {
-        let tracing = await this._storageManager.SwcTracings.findById(id);
+        let tracing = await SwcTracing.findByPk(id);
 
         if (!tracing) {
             return {id, error: {name: "DoesNotExistError", message: "A tracing with that id does not exist"}};
@@ -517,10 +510,10 @@ export class GraphQLServerContext {
         try {
             let result = false;
 
-            await this._storageManager.SwcConnection.transaction(async (t) => {
-                await this._storageManager.SwcNodes.destroy({where: {swcTracingId: id}, transaction: t});
+            await SwcNode.sequelize.transaction(async (t) => {
+                await SwcNode.destroy({where: {swcTracingId: id}, transaction: t});
 
-                let affectedRows = await this._storageManager.SwcTracings.destroy({where: {id: id}, transaction: t});
+                let affectedRows = await SwcTracing.destroy({where: {id: id}, transaction: t});
 
                 result = affectedRows > 0
             });
@@ -545,7 +538,7 @@ export class GraphQLServerContext {
     }
 
     public async deleteTracingsForNeurons(ids: string[]): Promise<IDeleteSwcTracingOutput[]> {
-        const tracingIds = (await this._storageManager.SwcTracings.findAll({where: {neuronId: {[Op.in]: ids}}})).map(o => o.id);
+        const tracingIds = (await SwcTracing.findAll({where: {neuronId: {[Op.in]: ids}}})).map(o => o.id);
 
         return this.deleteTracings(tracingIds);
     }

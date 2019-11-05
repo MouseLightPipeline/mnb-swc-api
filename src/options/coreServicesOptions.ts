@@ -1,3 +1,5 @@
+import {Dialect} from "sequelize";
+
 export interface IGraphQLServiceOptions {
     host: string;
     port: number;
@@ -11,8 +13,7 @@ const databaseServices = {
         password: "pgsecret",
         host: "sample-db",
         port: 5432,
-        dialect: "postgres",
-        operatorsAliases: false,
+        dialect: "postgres" as Dialect,
         logging: null
     },
     swc: {
@@ -21,8 +22,7 @@ const databaseServices = {
         password: "pgsecret",
         host: "swc-db",
         port: 5432,
-        dialect: "postgres",
-        operatorsAliases: false,
+        dialect: "postgres" as Dialect,
         logging: null
     }
 };

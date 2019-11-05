@@ -1,53 +1,56 @@
-import {IStructureIdentifierAttributes} from "./structureIdentifier";
-import {DataTypes, Instance, Model} from "sequelize";
-import {ISwcTracing} from "./tracing";
+import {Sequelize, DataTypes, BelongsToGetAssociationMixin} from "sequelize";
 
-export interface ISwcNodeAttributes {
-    id: string;
-    swcTracingId: string;
+import {BaseModel} from "../baseModel";
+import {StructureIdentifier} from "./structureIdentifier";
+import {SwcTracing} from "./tracing";
+
+export type SwcNodeMutationData = {
+    id?: string;
+    swcTracingId: string | null;
     sampleNumber: number;
     x: number;
     y: number;
     z: number;
     radius: number;
     parentNumber: number;
-    structureIdentifierId: string;
-    createdAt?: Date;
-    updatedAt?: Date;
 }
 
-export interface ISwcTracingNode extends Instance<ISwcNodeAttributes>, ISwcNodeAttributes {
-    getStructureIdentifier(): IStructureIdentifierAttributes;
-    getTracing(): ISwcTracing;
+export class SwcNode extends BaseModel {
+    public sampleNumber: number;
+    public x: number;
+    public y: number;
+    public z: number;
+    public radius: number;
+    public parentNumber: number;
+
+    public getStructureIdentifier!: BelongsToGetAssociationMixin<StructureIdentifier>;
+    public getTracing!: BelongsToGetAssociationMixin<SwcTracing>;
+
+    public readonly structureIdentifier?: StructureIdentifier;
 }
 
-export interface ISwcTracingNodeTable extends Model<ISwcTracingNode, ISwcNodeAttributes> {
-}
-
-export const TableName = "SwcTracingNode";
-
-export function sequelizeImport(sequelize, dataTypes: DataTypes) {
-    const TracingNode = sequelize.define(TableName, {
+export const modelInit = (sequelize: Sequelize) => {
+    SwcNode.init( {
         id: {
             primaryKey: true,
-            type: dataTypes.UUID,
-            defaultValue: dataTypes.UUIDV4
+            type: DataTypes.UUID,
+            defaultValue: DataTypes.UUIDV4
         },
-        sampleNumber: dataTypes.INTEGER,
-        x: dataTypes.DOUBLE,
-        y: dataTypes.DOUBLE,
-        z: dataTypes.DOUBLE,
-        radius: dataTypes.DOUBLE,
-        parentNumber: dataTypes.INTEGER
+        sampleNumber: DataTypes.INTEGER,
+        x: DataTypes.DOUBLE,
+        y: DataTypes.DOUBLE,
+        z: DataTypes.DOUBLE,
+        radius: DataTypes.DOUBLE,
+        parentNumber: DataTypes.INTEGER
     }, {
+        tableName: "SwcTracingNodes",
         timestamps: true,
-        paranoid: false
+        paranoid: false,
+        sequelize
     });
+};
 
-    TracingNode.associate = models => {
-        TracingNode.belongsTo(models.StructureIdentifier, {foreignKey: "structureIdentifierId"});
-        TracingNode.belongsTo(models.SwcTracing, {foreignKey: "swcTracingId"});
-    };
-
-    return TracingNode;
-}
+export const modelAssociate = () => {
+    SwcNode.belongsTo(StructureIdentifier, {foreignKey: "structureIdentifierId"});
+    SwcNode.belongsTo(SwcTracing, {foreignKey: "swcTracingId", as: "tracing"});
+};

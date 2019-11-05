@@ -2,9 +2,9 @@ import moment = require("moment");
 
 const debug = require("debug")("mnb:swc-api:swc");
 
-import {ISwcTracingNode} from "../models/swc/tracingNode";
-import {PersistentStorageManager} from "../data-access/storageManager";
-import {ISwcTracing} from "../models/swc/tracing";
+import {SwcNode} from "../models/swc/tracingNode";
+import {SwcTracing} from "../models/swc/tracing";
+import {StructureIdentifier} from "../models/swc/structureIdentifier";
 
 export async function swcExportMiddleware(req, res) {
     const id: string = req.body.id;
@@ -16,11 +16,14 @@ export async function swcExportMiddleware(req, res) {
     } else {
         debug(`handling swc request for id: ${id}`);
 
-        const tracing = await PersistentStorageManager.Instance().SwcTracings.findByPrimary(id);
+        const tracing = await SwcTracing.findByPk(id);
 
-        const nodes = await PersistentStorageManager.Instance().SwcNodes.findAll({
+        const nodes = await SwcNode.findAll({
             where: {swcTracingId: id},
-            order: [["sampleNumber", "ASC"]]
+            order: [["sampleNumber", "ASC"]],
+            include: [{
+                model: StructureIdentifier
+            }]
         });
 
         if (nodes.length === 0) {
@@ -38,7 +41,7 @@ export async function swcExportMiddleware(req, res) {
     await res.json(response);
 }
 
-function swcHeader(tracing: ISwcTracing) {
+function swcHeader(tracing: SwcTracing) {
     return `# Generated from MouseLight internal SWC manager ${moment().toLocaleString()}.\n` +
         `# Internal tracing id ${tracing.id}\n` +
         `# Annotator ${tracing.annotator}\n` +
@@ -46,11 +49,11 @@ function swcHeader(tracing: ISwcTracing) {
         `# OFFSET ${tracing.offsetX} ${tracing.offsetY} ${tracing.offsetZ}\n`;
 }
 
-function mapToSwc(nodes: ISwcTracingNode[]): string {
+function mapToSwc(nodes: SwcNode[]): string {
     return nodes.reduce((prev, node) => {
         let sampleNumber = node.sampleNumber;
         let parentNumber = node.parentNumber;
 
-        return prev + `${sampleNumber}\t${PersistentStorageManager.Instance().StructureIdentifiers.valueForId(node.structureIdentifierId)}\t${node.x.toFixed(6)}\t${node.y.toFixed(6)}\t${node.z.toFixed(6)}\t${node.radius.toFixed(6)}\t${parentNumber}\n`;
+        return prev + `${sampleNumber}\t${node.structureIdentifier.value}\t${node.x.toFixed(6)}\t${node.y.toFixed(6)}\t${node.z.toFixed(6)}\t${node.radius.toFixed(6)}\t${parentNumber}\n`;
     }, "");
 }

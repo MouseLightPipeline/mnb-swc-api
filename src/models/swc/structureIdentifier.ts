@@ -1,5 +1,7 @@
-import {Instance, Model} from "sequelize";
-import {ISwcTracingNode} from "./tracingNode";
+import { Sequelize, DataTypes, HasManyGetAssociationsMixin} from "sequelize";
+
+import {BaseModel} from "../baseModel";
+import {SwcNode} from "./tracingNode";
 
 export enum StructureIdentifiers {
     undefined = 0,
@@ -11,26 +13,41 @@ export enum StructureIdentifiers {
     endPoint = 6
 }
 
-export interface IStructureIdentifierAttributes {
-    id: string;
-    name: string;
-    value: number;
-    mutable: boolean;
+export class StructureIdentifier extends BaseModel {
+    public name: string;
+    public value: StructureIdentifiers;
+    public mutable: boolean;
+
+    public getNodes!: HasManyGetAssociationsMixin<SwcNode>;
+
+    public static valueIdMap = new Map<number, string>();
+    public static idValueMap = new Map<string, number>();
+
+    public static async buildIdValueMap()  {
+        if (this.valueIdMap.size === 0) {
+            const all = await StructureIdentifier.findAll({});
+            all.forEach(s => {
+                this.valueIdMap.set(s.value, s.id);
+                this.idValueMap.set(s.id, s.value);
+            });
+        }
+    }
+
+    public static idForValue(val: number) {
+        return this.valueIdMap.get(val);
+    }
+
+    public static valueForId(id: string) {
+        return this.idValueMap.get(id);
+    }
+
+    public static structuresAreLoaded () {
+        return this.valueIdMap.size > 0;
+    }
 }
 
-export interface IStructureIdentifier extends Instance<IStructureIdentifierAttributes>, IStructureIdentifierAttributes {
-    getNodes(): ISwcTracingNode[];
-}
-
-export interface IStructureIdentifierTable extends Model<IStructureIdentifier, IStructureIdentifierAttributes> {
-    idForValue(val: number): string;
-    valueForId(id: string): number;
-}
-
-export const TableName = "StructureIdentifier";
-
-export function sequelizeImport(sequelize, DataTypes) {
-    const StructureIdentifier = sequelize.define(TableName, {
+export const modelInit = (sequelize: Sequelize) => {
+    StructureIdentifier.init({
         id: {
             primaryKey: true,
             type: DataTypes.UUID,
@@ -41,41 +58,13 @@ export function sequelizeImport(sequelize, DataTypes) {
         mutable: {type: DataTypes.BOOLEAN, defaultValue: true}
     }, {
         timestamps: true,
-        paranoid: true
+        paranoid: true,
+        sequelize
     });
+};
 
-    StructureIdentifier.associate = (models) => {
-        StructureIdentifier.hasMany(models.SwcTracingNode, {foreignKey: "structureIdentifierId", as: "Nodes"});
-    };
+export const modelAssociate = () => {
+    StructureIdentifier.hasMany(SwcNode, {foreignKey: "structureIdentifierId", as: "Nodes"});
 
-    StructureIdentifier.prepareContents = () => {
-        StructureIdentifier.buildIdValueMap();
-    };
-
-    const valueIdMap = new Map<number, string>();
-    const idValueMap = new Map<string, number>();
-
-    StructureIdentifier.buildIdValueMap = async () => {
-        if (valueIdMap.size === 0) {
-            const all = await StructureIdentifier.findAll({});
-            all.forEach(s => {
-                valueIdMap.set(s.value, s.id);
-                idValueMap.set(s.id, s.value);
-            });
-        }
-    };
-
-    StructureIdentifier.idForValue = (val: number) => {
-        return valueIdMap.get(val);
-    };
-
-    StructureIdentifier.valueForId = (id: string) => {
-        return idValueMap.get(id);
-    };
-
-    StructureIdentifier.structuresAreLoaded = () => {
-        return valueIdMap.size > 0;
-    };
-
-    return StructureIdentifier;
-}
+    StructureIdentifier.buildIdValueMap().then();
+};

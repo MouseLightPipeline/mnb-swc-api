@@ -1,137 +1,82 @@
 import * as path from "path";
-import {Sequelize, QueryInterface} from "sequelize";
-import * as SequelizeFactory from "sequelize";
+import {Sequelize, QueryInterface, Options} from "sequelize";
 
 const debug = require("debug")("mnb:swc-api:database-connector");
 
-import {loadModels} from "./modelLoader";
 import {SequelizeOptions} from "../options/coreServicesOptions";
-import {IBrainAreaTable} from "../models/sample/brainArea";
-import {IFluorophoreTable} from "../models/sample/fluorophore";
-import {IInjectionTable} from "../models/sample/injection";
-import {IInjectionVirusTable} from "../models/sample/injectionVirus";
-import {IMouseStrainTable} from "../models/sample/mouseStrain";
-import {INeuronTable} from "../models/sample/neuron";
-import {ITransformTable} from "../models/sample/transform";
-import {ISampleTable} from "../models/sample/sample";
-import {ISwcTracingNodeTable} from "../models/swc/tracingNode";
-import {ISwcTracingTable} from "../models/swc/tracing";
-import {ITracingStructureTable} from "../models/swc/tracingStructure";
-import {IStructureIdentifierTable} from "../models/swc/structureIdentifier";
+import * as fs from "fs";
+import {StructureIdentifier} from "../models/swc/structureIdentifier";
 
-export interface ILocalDatabase<T> {
-    connection: Sequelize;
-    models: T;
-    isConnected: boolean;
-}
-
-export class SampleTables {
-    public constructor() {
-        this.BrainArea = null;
-        this.Fluorophore = null;
-        this.Injection = null;
-        this.InjectionVirus = null;
-        this.MouseStrain = null;
-        this.Neuron = null;
-        this.Sample = null;
-        this.RegistrationTransform = null;
+export class RemoteDatabaseClient {
+    public static async Start(name: string, options: Options): Promise<RemoteDatabaseClient> {
+        const client = new RemoteDatabaseClient(options);
+        await client.start(name);
+        return client;
     }
 
-    BrainArea: IBrainAreaTable;
-    Fluorophore: IFluorophoreTable;
-    Injection: IInjectionTable;
-    InjectionVirus: IInjectionVirusTable;
-    MouseStrain: IMouseStrainTable;
-    Neuron: INeuronTable;
-    RegistrationTransform: ITransformTable;
-    Sample: ISampleTable;
-}
+    private _connection: Sequelize;
+    private readonly _options: Options;
 
-export interface ISampleDatabase extends ILocalDatabase<SampleTables> {
-}
-
-export class SwcTables {
-    public constructor() {
-        this.SwcTracing = null;
-        this.SwcTracingNode = null;
-        this.StructureIdentifier = null;
-        this.TracingStructure = null;
+    private constructor(options: Options) {
+        this._options = options;
     }
 
-    SwcTracing: ISwcTracingTable;
-    SwcTracingNode: ISwcTracingNodeTable;
-    StructureIdentifier: IStructureIdentifierTable;
-    TracingStructure: ITracingStructureTable;
-}
+    private async start(name: string) {
+        this.createConnection(name, this._options);
+        await this.authenticate(name);
 
-export interface ISwcDatabase extends ILocalDatabase<SwcTables> {
-}
-
-export class PersistentStorageManager {
-
-    private sampleDatabase: ISampleDatabase;
-    private swcDatabase: ISwcDatabase;
-
-    public static Instance(): PersistentStorageManager {
-        return _manager;
+        if (name === "swc") {
+            await this.seedIfRequired();
+        }
     }
 
-    public get SwcConnection() {
-        return this.swcDatabase.connection;
+    private createConnection(name: string, options: Options) {
+        this._connection = new Sequelize(options.database, options.username, options.password, options);
+
+        this.loadModels(path.normalize(path.join(__dirname, "..", "models", name)));
     }
 
-    public get Samples() {
-        return this.sampleDatabase.models.Sample;
+    private async authenticate(name: string) {
+        try {
+            await this._connection.authenticate();
+
+            debug(`successful database connection: ${name}`);
+
+        } catch (err) {
+            if (err.name === "SequelizeConnectionRefusedError") {
+                debug(`failed database connection: ${name} (connection refused - is it running?) - delaying 5 seconds`);
+            } else {
+                debug(`failed database connection: ${name} - delaying 5 seconds`);
+                debug(err);
+            }
+
+            setTimeout(() => this.authenticate(name), 5000);
+        }
     }
 
-    public get Injections() {
-        return this.sampleDatabase.models.Injection;
-    }
+    private loadModels(modelLocation: string) {
+        const modules = [];
 
-    public get RegistrationTransforms() {
-        return this.sampleDatabase.models.RegistrationTransform;
-    }
+        fs.readdirSync(modelLocation).filter(file => {
+            return (file.indexOf(".") !== 0) && (file.slice(-3) === ".js");
+        }).forEach(file => {
+            let modelModule = require(path.join(modelLocation, file.slice(0, -3)));
 
-    public get Neurons() {
-        return this.sampleDatabase.models.Neuron;
-    }
+            if (modelModule.modelInit != null) {
+                modelModule.modelInit(this._connection);
+                modules.push(modelModule);
+            }
+        });
 
-    public get MouseStrains() {
-        return this.sampleDatabase.models.MouseStrain;
-    }
-
-    public get InjectionViruses() {
-        return this.sampleDatabase.models.InjectionVirus;
-    }
-
-    public get SwcTracings() {
-        return this.swcDatabase.models.SwcTracing;
-    }
-
-    public get SwcNodes() {
-        return this.swcDatabase.models.SwcTracingNode;
-    }
-
-    public get TracingStructures() {
-        return this.swcDatabase.models.TracingStructure;
-    }
-
-    public get StructureIdentifiers() {
-        return this.swcDatabase.models.StructureIdentifier;
-    }
-
-    public async initialize() {
-        this.sampleDatabase = await createConnection<SampleTables>("sample", new SampleTables());
-        await authenticate(this.sampleDatabase, "sample");
-
-        this.swcDatabase = await createConnection<SwcTables>("swc", new SwcTables());
-        await authenticate(this.swcDatabase, "swc");
-
-        await this.seedIfRequired();
+        modules.forEach(modelModule => {
+            if (modelModule.modelAssociate != null) {
+                modelModule.modelAssociate();
+            }
+        });
     }
 
     private async seedIfRequired() {
-        const count = await this.StructureIdentifiers.count();
+        const count = await StructureIdentifier.count();
 
         if (count > 0) {
             debug("skipping seed - structure identifiers exist");
@@ -140,56 +85,15 @@ export class PersistentStorageManager {
 
         debug("seeding database");
 
-        const queryInterface: QueryInterface = this.swcDatabase.connection.getQueryInterface();
+        const queryInterface: QueryInterface = this._connection.getQueryInterface();
 
         const when = new Date();
 
         await queryInterface.bulkInsert("StructureIdentifiers", loadStructureIdentifiers(when), {});
         await queryInterface.bulkInsert("TracingStructures", loadTracingStructures(when), {});
 
-        // Need to fill cache if first seed - was empty when authenticate is called.
-        Object.keys(this.swcDatabase.models).map(modelName => {
-            if (this.swcDatabase.models[modelName].prepareContents) {
-                this.swcDatabase.models[modelName].prepareContents();
-            }
-        });
+        debug("seed complete");
     }
-}
-
-async function authenticate(database, name) {
-    try {
-        await database.connection.authenticate();
-
-        database.isConnected = true;
-
-        debug(`successful database connection: ${name}`);
-
-        if (name === "swc") {
-            Object.keys(database.models).map(modelName => {
-                if (database.models[modelName].prepareContents) {
-                    database.models[modelName].prepareContents();
-                }
-            });
-        }
-    } catch (err) {
-        debug(`failed database connection: ${name}`);
-        debug(err);
-        setTimeout(() => authenticate(database, name), 5000);
-    }
-}
-
-async function createConnection<T>(name: string, models: T) {
-    let databaseConfig = SequelizeOptions[name];
-
-    let db: ILocalDatabase<T> = {
-        connection: null,
-        models: models,
-        isConnected: false
-    };
-
-    db.connection = new SequelizeFactory(databaseConfig.database, databaseConfig.username, databaseConfig.password, databaseConfig);
-
-    return await loadModels<T>(db, path.join(__dirname,  "..", "models",  name));
 }
 
 function loadTracingStructures(when: Date) {
@@ -278,9 +182,3 @@ function loadStructureIdentifiers(when: Date) {
         }
     ];
 }
-
-const _manager: PersistentStorageManager = new PersistentStorageManager();
-
-_manager.initialize().then(() => {
-});
-
