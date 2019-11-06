@@ -9,7 +9,7 @@ import {
     optionsWhereIds,
     WithInjectionsQueryInput,
     WithNeuronsQueryInput
-} from "./findOptions";
+} from "../findOptions";
 
 export type CompartmentQueryInput = EntityQueryInput & WithInjectionsQueryInput & WithNeuronsQueryInput;
 

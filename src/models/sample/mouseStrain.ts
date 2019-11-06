@@ -1,7 +1,7 @@
 import {Sequelize, DataTypes, HasManyGetAssociationsMixin, FindOrCreateOptions, FindOptions} from "sequelize";
 
 import {BaseModel, EntityMutateOutput, EntityQueryInput} from "../baseModel";
-import {optionsIncludeSampleIds, optionsWhereIds, WithSamplesQueryInput} from "./findOptions";
+import {optionsIncludeSampleIds, optionsWhereIds, WithSamplesQueryInput} from "../findOptions";
 import {Sample} from "./sample";
 
 export type MouseStrainQueryInput = EntityQueryInput & WithSamplesQueryInput;

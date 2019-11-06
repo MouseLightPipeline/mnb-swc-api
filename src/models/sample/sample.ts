@@ -22,7 +22,7 @@ import {
     WithInjectionsQueryInput,
     WithMouseStrainQueryInput,
     WithRegistrationTransformQueryInput
-} from "./findOptions";
+} from "../findOptions";
 import {MouseStrain} from "./mouseStrain";
 import {RegistrationTransform} from "./transform";
 import {Injection} from "./injection";

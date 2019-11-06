@@ -2,8 +2,8 @@ import moment = require("moment");
 
 const debug = require("debug")("mnb:swc-api:swc");
 
-import {SwcNode} from "../models/swc/tracingNode";
-import {SwcTracing} from "../models/swc/tracing";
+import {SwcNode} from "../models/swc/swcNode";
+import {SwcTracing} from "../models/swc/swcTracing";
 import {StructureIdentifier} from "../models/swc/structureIdentifier";
 
 export async function swcExportMiddleware(req, res) {

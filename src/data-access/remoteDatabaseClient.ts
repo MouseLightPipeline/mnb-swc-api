@@ -1,10 +1,9 @@
 import * as path from "path";
+import * as fs from "fs";
 import {Sequelize, QueryInterface, Options} from "sequelize";
 
 const debug = require("debug")("mnb:swc-api:database-connector");
 
-import {SequelizeOptions} from "../options/coreServicesOptions";
-import * as fs from "fs";
 import {StructureIdentifier} from "../models/swc/structureIdentifier";
 
 export class RemoteDatabaseClient {

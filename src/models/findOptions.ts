@@ -1,10 +1,10 @@
 import {FindOptions, Op} from "sequelize";
 
-import {Injection} from "./injection";
-import {Neuron} from "./neuron";
-import {Sample} from "./sample"
-import {EntityQueryInput} from "../baseModel";
-import {RegistrationTransform} from "./transform";
+import {Injection} from "./sample/injection";
+import {Neuron} from "./sample/neuron";
+import {Sample} from "./sample/sample"
+import {EntityQueryInput} from "./baseModel";
+import {RegistrationTransform} from "./sample/transform";
 
 export type WithCompartmentQueryInput = {
     brainAreaIds?: string[];

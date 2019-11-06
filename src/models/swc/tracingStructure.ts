@@ -1,7 +1,7 @@
 import {Sequelize, DataTypes, HasManyGetAssociationsMixin} from "sequelize";
 
 import {BaseModel} from "../baseModel";
-import {SwcTracing} from "./tracing";
+import {SwcTracing} from "./swcTracing";
 
 export class TracingStructure extends BaseModel {
     public id: string;

@@ -10,8 +10,8 @@ import resolvers from "./graphql/serverResolvers";
 import {GraphQLServerContext} from "./graphql/serverContext";
 import {swcExportMiddleware} from "./middleware/swcExportMiddleware";
 import bodyParser = require("body-parser");
-import {RemoteDatabaseClient} from "./data-access/storageManager";
 import {SequelizeOptions} from "./options/coreServicesOptions";
+import {RemoteDatabaseClient} from "./data-access/remoteDatabaseClient";
 
 start().then().catch((err) => debug(err));
 

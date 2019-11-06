@@ -26,7 +26,7 @@ import {
     WithInjectionVirusQueryInput,
     WithNeuronsQueryInput,
     WithSamplesQueryInput
-} from "./findOptions";
+} from "../findOptions";
 
 export type InjectionQueryInput =
     EntityQueryInput

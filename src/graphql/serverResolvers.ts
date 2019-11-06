@@ -10,12 +10,12 @@ import {
     IUploadOutput, IUploadFile
 } from "./serverContext";
 
-import {ISwcTracingInput, SwcTracing} from "../models/swc/tracing";
+import {ISwcTracingInput, SwcTracing} from "../models/swc/swcTracing";
 import {Sample} from "../models/sample/sample";
 import {MouseStrain} from "../models/sample/mouseStrain";
 import {Neuron} from "../models/sample/neuron";
 import {Injection} from "../models/sample/injection";
-import {SwcNode} from "../models/swc/tracingNode";
+import {SwcNode} from "../models/swc/swcNode";
 import {StructureIdentifier} from "../models/swc/structureIdentifier";
 import {TracingStructure} from "../models/swc/tracingStructure";
 import {InjectionVirus} from "../models/sample/injectionVirus";

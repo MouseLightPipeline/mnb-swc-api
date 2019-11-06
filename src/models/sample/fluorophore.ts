@@ -1,7 +1,7 @@
 import {Sequelize, DataTypes, FindOrCreateOptions, HasManyGetAssociationsMixin, FindOptions} from "sequelize";
 
 import {BaseModel, EntityMutateOutput, EntityQueryInput} from "../baseModel";
-import {optionsIncludeInjectionIds, optionsWhereIds, WithInjectionsQueryInput} from "./findOptions";
+import {optionsIncludeInjectionIds, optionsWhereIds, WithInjectionsQueryInput} from "../findOptions";
 import {Injection} from "./injection";
 
 export type FluorophoreQueryInput = EntityQueryInput & WithInjectionsQueryInput;

@@ -8,7 +8,7 @@ import {swcParse} from "../Swc";
 import {transformClient} from "../external/transformApiClient";
 import {Sample} from "../models/sample/sample";
 import {StructureIdentifier} from "../models/swc/structureIdentifier";
-import {ISwcTracingInput, SwcTracing} from "../models/swc/tracing";
+import {ISwcTracingInput, SwcTracing} from "../models/swc/swcTracing";
 import {MouseStrain} from "../models/sample/mouseStrain";
 import {Injection} from "../models/sample/injection";
 import {InjectionVirus} from "../models/sample/injectionVirus";
@@ -17,7 +17,7 @@ import {RegistrationTransform} from "../models/sample/transform";
 import {BrainArea} from "../models/sample/brainArea";
 import {Fluorophore} from "../models/sample/fluorophore";
 import {TracingStructure} from "../models/swc/tracingStructure";
-import {SwcNode, SwcNodeMutationData} from "../models/swc/tracingNode";
+import {SwcNode, SwcNodeMutationData} from "../models/swc/swcNode";
 
 export interface IUploadFile {
     filename: string;

@@ -2,7 +2,7 @@ import {Sequelize, DataTypes, BelongsToGetAssociationMixin, HasManyGetAssociatio
 
 import {BaseModel} from "../baseModel";
 import {TracingStructure} from "./tracingStructure";
-import {SwcNode} from "./tracingNode";
+import {SwcNode} from "./swcNode";
 
 export interface ISwcTracingInput {
     id?: string;

@@ -2,7 +2,7 @@ import {Sequelize, DataTypes, BelongsToGetAssociationMixin} from "sequelize";
 
 import {BaseModel} from "../baseModel";
 import {StructureIdentifier} from "./structureIdentifier";
-import {SwcTracing} from "./tracing";
+import {SwcTracing} from "./swcTracing";
 
 export type SwcNodeMutationData = {
     id?: string;

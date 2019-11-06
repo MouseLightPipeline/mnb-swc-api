@@ -11,7 +11,7 @@ import {
     optionsWhereIds,
     optionsWhereInjectionIds,
     optionsWhereSampleIds, WithCompartmentQueryInput, WithInjectionsQueryInput, WithSamplesQueryInput
-} from "./findOptions";
+} from "../findOptions";
 import {BrainArea} from "./brainArea";
 import {Injection} from "./injection";
 
