@@ -9,7 +9,7 @@
   "dockerRepository": "mouselightdatabrowser",
   "dockerImageName": "swc-api",
   "scripts": {
-    "debug": "DEBUG=mnb* node $NODE_DEBUG_OPTION --trace-deprecation src/app.js",
+    "debug": "node $NODE_DEBUG_OPTION --trace-deprecation src/app.js",
     "docker-build": "gulp docker-build",
     "docker-release": "gulp release"
   },
